@@ -199,7 +199,7 @@ class BatchStats:
 
     def _elbo(self, beta: float) -> Tensor:
         assert self._bce.shape == self._kl_val.shape
-        return (-self._bce - beta * self._kl_val).sum(dim=0)
+        return (self._bce - beta * self._kl_val).sum(dim=0)
 
     def convert_to_float(self) -> BatchStatsFloat:
         return BatchStatsFloat(self.bce,

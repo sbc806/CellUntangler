@@ -53,6 +53,7 @@ class ImageDynamicBinarization:
         return x
 
 
+# MNIST is from pytorch
 class MnistVaeDataset(VaeDataset):
 
     def __init__(self, batch_size: int, data_folder: str) -> None:

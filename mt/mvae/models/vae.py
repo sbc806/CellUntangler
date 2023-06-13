@@ -26,6 +26,7 @@ from ..stats import BatchStats, BatchStatsFloat
 from ..components import Component
 
 
+#TODO: add mask
 class Reparametrized:
 
     def __init__(self, q_z: Distribution, p_z: Distribution, z: Tensor, data: Tuple[Tensor, ...]) -> None:
@@ -40,7 +41,9 @@ Outputs = Tuple[List[Reparametrized], Tensor, Tensor]
 
 class ModelVAE(torch.nn.Module):
 
-    def __init__(self, h_dim: int, components: List[Component], dataset: VaeDataset,
+    def __init__(self, h_dim: int, components: List[Component],
+                 mask,
+                 dataset: VaeDataset,
                  scalar_parametrization: bool) -> None:
         """
         ModelVAE initializer
@@ -50,7 +53,18 @@ class ModelVAE(torch.nn.Module):
         super().__init__()
         self.device = torch.device("cpu")
         self.components = nn.ModuleList(components)
-        self.reconstruction_loss = dataset.reconstruction_loss
+
+        self.mask = mask
+        self.num_gene = torch.sum(self.mask > 0, 1)
+
+        dim_all = [i.dim for i in self.components]
+        dim_z = sum(dim_all)
+
+        mask_z = np.zeros(dim_z)
+        mask_z[:dim_all[0]] = 1
+        self.mask_z = torch.tensor(mask_z)
+
+        self.reconstruction_loss = dataset.reconstruction_loss  # dataset-dependent, not implemented
 
         self.total_z_dim = sum(component.dim for component in components)
         for component in components:
@@ -66,18 +80,37 @@ class ModelVAE(torch.nn.Module):
     def decode(self, concat_z: Tensor) -> Tensor:
         raise NotImplementedError
 
+    # it's the forward function that defines the network structure
     def forward(self, x: Tensor) -> Outputs:
-        x_encoded = self.encode(x)
-
         reparametrized = []
-        for component in self.components:
+
+        for i, component in enumerate(self.components):
+            x_mask = x * self.mask[i]
+
+            # Normalization is important for PCA, does not so for NN?
+            if i < 1:
+                x_mask = torch.nn.functional.normalize(x_mask, p=2, dim=-1)
+            x_encoded = self.encode(x_mask)
+
             q_z, p_z, _ = component(x_encoded)
             z, data = q_z.rsample_with_parts()
+
+            if 0 == i:
+                z = torch.cat((torch.relu(z[..., 0:1]), z[..., 1:]), dim=1)
+
             reparametrized.append(Reparametrized(q_z, p_z, z, data))
 
         concat_z = torch.cat(tuple(x.z for x in reparametrized), dim=-1)
-        x_ = self.decode(concat_z)
-        return reparametrized, concat_z, x_
+        mu1, sigma_square1 = self.decode(concat_z * self.mask_z)
+        mu1 = mu1[:, :self.num_gene[0]]
+        sigma_square1 = sigma_square1[:self.num_gene[0]]
+
+        mu, sigma_square = self.decode(concat_z)
+        mu = torch.cat((mu1, mu[:, self.num_gene[0]:]), dim=-1)
+        sigma_square = torch.cat(
+            (sigma_square1, sigma_square[self.num_gene[0]:]), dim=-1)
+
+        return reparametrized, concat_z, mu, sigma_square
 
     def log_likelihood(self, x: Tensor, n: int = 500) -> Tuple[Tensor, Tensor, Tensor]:
         """
@@ -89,27 +122,44 @@ class ModelVAE(torch.nn.Module):
         batch_size = x.shape[0]
         prob_shape = torch.Size([n, batch_size])
 
-        x_encoded = self.encode(x)
+        library_size = torch.sum(x, dim=1)
+
         log_p_z = torch.zeros(prob_shape, device=x.device)
         log_q_z_x = torch.zeros(prob_shape, device=x.device)
         zs = []
-        for component in self.components:
+
+        x1 = torch.log1p(x)
+        for i, component in enumerate(self.components):
+            x_mask = x1 * self.mask[i]
+            if i < 1:
+                x_mask = torch.nn.functional.normalize(x_mask, p=2, dim=0)
+            x_encoded = self.encode(x_mask)
+
             q_z, p_z, z_params = component(x_encoded)
 
             # Numerically more stable.
             z, log_q_z_x_, log_p_z_ = component.sampling_procedure.rsample_log_probs(sample_shape, q_z, p_z)
+
+            if 0 == i:
+                z = torch.cat((torch.relu(z[..., 0:1]), z[..., 1:]), dim=1)
+
             zs.append(z)
 
             log_p_z += log_p_z_
             log_q_z_x += log_q_z_x_
 
         concat_z = torch.cat(zs, dim=-1)
-        x_mb_ = self.decode(concat_z)
+        mu_, sigma_squrare_ = self.decode(concat_z)
+        mu_ = mu_ * library_size[:, None]
+
         x_orig = x.repeat((n, 1, 1))
-        log_p_x_z = -self.reconstruction_loss(x_mb_, x_orig).sum(dim=-1)
+
+        # log_p_x_z = -self.reconstruction_loss(mu_, x_orig).sum(dim=-1)
+        log_p_x_z = self.log_likelihood_nb(x_orig, mu_, sigma_squrare_)
 
         assert log_p_x_z.shape == log_p_z.shape
         assert log_q_z_x.shape == log_p_z.shape
+
         joint = (log_p_x_z + log_p_z - log_q_z_x)
         log_p_x = joint.logsumexp(dim=0) - np.log(n)
 
@@ -125,16 +175,25 @@ class ModelVAE(torch.nn.Module):
     def compute_batch_stats(self,
                             x_mb: Tensor,
                             x_mb_: Tensor,
+                            sigma_square_: Tensor,
                             reparametrized: List[Reparametrized],
                             beta: float,
                             likelihood_n: int = 0) -> BatchStats:
-        bce = self.reconstruction_loss(x_mb_, x_mb).sum(dim=-1)
+
+        # Coupled
+        # For each component
+        #
+        # bce = self.reconstruction_loss(x_mb_, x_mb).sum(dim=-1)
+        bce = self.log_likelihood_nb(x_mb, x_mb_, sigma_square_)
+
         assert torch.isfinite(bce).all()
-        assert (bce >= 0).all()
+        # assert (bce >= 0).all()
 
         component_kl = []
+        weight = [1.0, 1.0]
         for i, (component, r) in enumerate(zip(self.components, reparametrized)):
-            kl_comp = component.kl_loss(r.q_z, r.p_z, r.z, r.data)
+            kl_comp = component.kl_loss(r.q_z, r.p_z, r.z, r.data) * weight[i]
+
             assert torch.isfinite(kl_comp).all()
             component_kl.append(kl_comp)
 
@@ -150,17 +209,35 @@ class ModelVAE(torch.nn.Module):
                    beta: float) -> Tuple[BatchStatsFloat, Outputs]:
         optimizer.zero_grad()
 
+        library_size = torch.sum(x_mb, dim=1)
+
         x_mb = x_mb.to(self.device)
-        reparametrized, concat_z, x_mb_ = self(x_mb)
+        reparametrized, concat_z, x_mb_, sigma_square_ = self(torch.log1p(x_mb))
+
+        x_mb_ = x_mb_ * library_size[:, None]
+
         assert x_mb_.shape == x_mb.shape
-        batch_stats = self.compute_batch_stats(x_mb, x_mb_, reparametrized, likelihood_n=0, beta=beta)
+        batch_stats = self.compute_batch_stats(x_mb, x_mb_, sigma_square_,
+                                               reparametrized, likelihood_n=0, beta=beta)
 
         loss = -batch_stats.elbo  # Maximize elbo instead of minimizing it.
         assert torch.isfinite(loss).all()
         loss.backward()
+
         c_params = [v for k, v in self.named_parameters() if "curvature" in k]
         if c_params:  # TODO: Look into this, possibly disable it.
             torch.nn.utils.clip_grad_norm_(c_params, max_norm=1.0, norm_type=2)  # Enable grad clip?
         optimizer.step()
 
         return batch_stats.convert_to_float(), (reparametrized, concat_z, x_mb_)
+
+    def log_likelihood_nb(self, x, mu, sigma, eps=1e-16):
+
+        log_mu_sigma = torch.log(mu + sigma + eps)
+
+        ll = torch.lgamma(x + sigma) - torch.lgamma(sigma) - \
+             torch.lgamma(x + 1) + sigma * torch.log(sigma + eps) - \
+             sigma * log_mu_sigma + x * torch.log(mu + eps) - x * log_mu_sigma
+
+        return torch.sum(ll, dim=-1)
+

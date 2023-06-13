@@ -18,6 +18,7 @@ from typing import Any
 from .image_reconstruction import CifarVaeDataset, MnistVaeDataset, OmniglotVaeDataset
 from .synthetic import BdpVaeDataset
 from .vae_dataset import VaeDataset
+# from .umi_data import UMIVaeDataset
 
 __all__ = [
     "BdpVaeDataset",
@@ -38,5 +39,7 @@ def create_dataset(dataset_type: str, *args: Any, **kwargs: Any) -> VaeDataset:
         return OmniglotVaeDataset(*args, **kwargs)
     elif dataset_type == "cifar":
         return CifarVaeDataset(*args, **kwargs)
+    elif dataset_type == 'DC':
+        return UMIVaeDataset(*args, **kwargs)
     else:
         raise ValueError(f"Unknown dataset type: '{dataset_type}'.")

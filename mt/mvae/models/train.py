@@ -82,17 +82,19 @@ class Trainer:
         def _get_elbo(epoch: int) -> float:
             return float(results[epoch].elbo)
 
-        cur_stop_step = epoch - lookahead
-        lookahead_interval = range(cur_stop_step + 1, epoch + 1)  # (cur_stop_step, epoch]
-        elbos = np.asarray([_get_elbo(i) for i in lookahead_interval])
-        max_elbo_i = np.argmax(elbos)
-        max_elbo = elbos[max_elbo_i]
-        if max_elbo < _get_elbo(cur_stop_step):
-            return cur_stop_step
-        elif epoch == max_epoch:
-            return cur_stop_step + 1 + max_elbo_i
-        else:
-            return None
+        return None
+
+        # cur_stop_step = epoch - lookahead
+        # lookahead_interval = range(cur_stop_step + 1, epoch + 1)  # (cur_stop_step, epoch]
+        # elbos = np.asarray([_get_elbo(i) for i in lookahead_interval])
+        # max_elbo_i = np.argmax(elbos)
+        # max_elbo = elbos[max_elbo_i]
+        # if max_elbo < _get_elbo(cur_stop_step):
+        #     return cur_stop_step
+        # elif epoch == max_epoch:
+        #     return cur_stop_step + 1 + max_elbo_i
+        # else:
+        #     return None
 
     def get_beta(self, betas: Optional[Sequence[float]]) -> float:
         if betas is None:
@@ -120,7 +122,7 @@ class Trainer:
         for _ in range(warmup):
             beta = self.get_beta(betas)
             train_results[self.epoch] = self._train_epoch(optimizer, train_data, beta=beta)
-            self._update_checkpoints(lookahead)
+            # self._update_checkpoints(lookahead)
             self.epoch += 1
             self._try_test_during_train(test_results, eval_data, likelihood_n, betas)
 
@@ -131,27 +133,27 @@ class Trainer:
             train_results[self.epoch] = self._train_epoch(optimizer, train_data, beta=beta)
 
             stop_epoch = Trainer._should_stop(train_results, self.epoch, lookahead, max_epoch=max_epochs - 1)
-            self._update_checkpoints(lookahead)
+            # self._update_checkpoints(lookahead)
             if stop_epoch:
                 break
             self.epoch += 1
             self._try_test_during_train(test_results, eval_data, likelihood_n, betas)
 
-        if not stop_epoch:
-            warnings.warn("Did not stop using early stopping.")
-        self._load_epoch(stop_epoch)
-        last_epoch = self.epoch
-        self.epoch = stop_epoch
-        print(f"Stopped at epoch: {stop_epoch}. Deleting epochs [{stop_epoch + 1}, {last_epoch}] and "
-              f"[{last_epoch - lookahead},{stop_epoch - 1}].")
-        for epoch in range(stop_epoch + 1, last_epoch + 1):
-            self._delete_epoch(epoch)
-        for epoch in range(last_epoch - lookahead, stop_epoch):
-            self._delete_epoch(epoch)
-        with torch.set_grad_enabled(False):
-            test_results[stop_epoch] = self._test_epoch(eval_data, likelihood_n=likelihood_n, beta=self.get_beta(betas))
-
-        return test_results
+        # if not stop_epoch:
+        #     warnings.warn("Did not stop using early stopping.")
+        # self._load_epoch(stop_epoch)
+        # last_epoch = self.epoch
+        # self.epoch = stop_epoch
+        # print(f"Stopped at epoch: {stop_epoch}. Deleting epochs [{stop_epoch + 1}, {last_epoch}] and "
+        #       f"[{last_epoch - lookahead},{stop_epoch - 1}].")
+        # for epoch in range(stop_epoch + 1, last_epoch + 1):
+        #     self._delete_epoch(epoch)
+        # for epoch in range(last_epoch - lookahead, stop_epoch):
+        #     self._delete_epoch(epoch)
+        # with torch.set_grad_enabled(False):
+        #     test_results[stop_epoch] = self._test_epoch(eval_data, likelihood_n=likelihood_n, beta=self.get_beta(betas))
+        #
+        # return test_results
 
     def _try_test_during_train(self, test_results: Mapping[int, EpochStats], eval_data: DataLoader, likelihood_n: int,
                                betas: Optional[Sequence[float]]) -> None:
@@ -186,12 +188,12 @@ class Trainer:
         print(f"\tTrainEpoch {self.epoch}:\t", end="")
         self.model.train()
 
-        if self.epoch < 10:
-            for c in self.model.components:
-                if isinstance(c, StereographicallyProjectedSphereComponent) or isinstance(c, SphericalComponent):
-                    c._pradius.data = torch.ones_like(c._pradius.data) * (11 - self.epoch)
-                elif isinstance(c, PoincareComponent) or isinstance(c, HyperbolicComponent):
-                    c._nradius.data = torch.ones_like(c._nradius.data) * (11 - self.epoch)
+        # if self.epoch < 10:
+        #     for c in self.model.components:
+        #         if isinstance(c, StereographicallyProjectedSphereComponent) or isinstance(c, SphericalComponent):
+        #             c._pradius.data = torch.ones_like(c._pradius.data) * (11 - self.epoch)
+        #         elif isinstance(c, PoincareComponent) or isinstance(c, HyperbolicComponent):
+        #             c._nradius.data = torch.ones_like(c._nradius.data) * (11 - self.epoch)
 
         batch_stats = []
         for x_mb, y_mb in train_data:
@@ -229,13 +231,14 @@ class Trainer:
             total_embeddings = []
             labels = []
 
-        image_summary = True
+        image_summary = False
         batch_stats = []
         histograms: Dict[str, List[torch.Tensor]] = defaultdict(list)
         for batch_idx, (x_mb, y_mb) in enumerate(test_data):
             x_mb = x_mb.to(self.model.device)
-            reparametrized, concat_z, x_mb_ = self.model(x_mb)
-            stats = self.model.compute_batch_stats(x_mb, x_mb_, reparametrized, likelihood_n=likelihood_n, beta=beta)
+            reparametrized, concat_z, x_mb_, sigma_square_ = self.model(x_mb)
+            stats = self.model.compute_batch_stats(x_mb, x_mb_, sigma_square_,
+                                                   reparametrized, likelihood_n=likelihood_n, beta=beta)
             batch_stats.append(stats.convert_to_float())
 
             for i, (component, r) in enumerate(zip(self.model.components, reparametrized)):
@@ -309,7 +312,7 @@ class Trainer:
         labels = []
         for batch_idx, (x_mb, y_mb) in enumerate(data):
             x_mb = x_mb.to(self.model.device)
-            reparametrized, concat_z, x_mb_ = self.model(x_mb)
+            reparametrized, concat_z, x_mb_, sigma_square_ = self.model(x_mb)
 
             for i, (component, r) in enumerate(zip(self.model.components, reparametrized)):
                 embeddings[i].append(r.q_z.loc.to("cpu"))
@@ -340,7 +343,7 @@ class Trainer:
         pos_curv_params = [v for key, v in self.model.named_parameters() if pcurvature_param_cond(key)]
         curv_params = neg_curv_params + pos_curv_params
 
-        net_optimizer = torch.optim.Adam(net_params, lr=learning_rate)
+        net_optimizer = torch.optim.AdamW(net_params, lr=learning_rate)
         if not fixed_curvature and not curv_params:
             warnings.warn("Fixed curvature disabled, but found no curvature parameters. Did you mean to set "
                           "fixed=True, or not?")

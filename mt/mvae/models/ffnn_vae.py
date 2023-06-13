@@ -32,16 +32,20 @@ class FeedForwardVAE(ModelVAE):
 
         self.in_dim = dataset.in_dim
 
+        # multi-layer
+        # http://adamlineberry.ai/vae-series/vae-code-experiments
         # 1 hidden layer encoder
         self.fc_e0 = nn.Linear(dataset.in_dim, h_dim)
 
         # 1 hidden layer decoder
         self.fc_d0 = nn.Linear(self.total_z_dim, h_dim)
+
         self.fc_logits = nn.Linear(h_dim, dataset.in_dim)
 
     def encode(self, x: Tensor) -> Tensor:
         assert len(x.shape) == 2
         bs, dim = x.shape
+
         assert dim == self.in_dim
         x = x.view(bs, self.in_dim)
 
