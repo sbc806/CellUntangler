@@ -64,10 +64,12 @@ class NBVAE(ModelVAE):
 
     def encode(self, x: Tensor) -> Tensor:
         x = x.squeeze()
+        print("Hello")
 
         assert len(x.shape) == 2
         bs, dim = x.shape
 
+        print(dim, self.in_dim)
         assert dim == self.in_dim
         x = x.view(bs, self.in_dim)
 
