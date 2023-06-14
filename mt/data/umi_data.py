@@ -56,8 +56,8 @@ class UmiDataset(Dataset):
 # https://stackoverflow.com/questions/41924453/pytorch-how-to-use-dataloaders-for-custom-datasets
 class UMIVaeDataset(VaeDataset):
 
-    def __init__(self, batch_size: int, *args: Any, **kwargs: Any) -> None:
-        super().__init__(batch_size, in_dim=253, img_dims=None)
+    def __init__(self, batch_size: int, in_dim: int, *args: Any, **kwargs: Any) -> None:
+        super().__init__(batch_size, in_dim=in_dim, img_dims=None)
 
     def _load_synth(self, dataset: UmiDataset, train: bool = True) -> DataLoader:
         return DataLoader(dataset=dataset, batch_size=self.batch_size,
