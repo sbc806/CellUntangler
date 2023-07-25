@@ -103,7 +103,7 @@ class ModelVAE(torch.nn.Module):
         for i, component in enumerate(self.components):
             x_mask = x * self.mask[i]
 
-            if self.cell_cycle_compoents:
+            if self.cell_cycle_components:
                 # New code
                 if self.cell_cycle_components[i]:
                     x_mask = torch.nn.functional.normalize(x_mask, p=2, dim=-1)
