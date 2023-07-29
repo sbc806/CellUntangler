@@ -95,8 +95,8 @@ class ModelVAE(torch.nn.Module):
             q_z, p_z, _ = component(x_encoded)
             z, data = q_z.rsample_with_parts()
 
-            if 0 == i:
-                z = torch.cat((torch.relu(z[..., 0:1]), z[..., 1:]), dim=1)
+            # if 0 == i:
+                # z = torch.cat((torch.relu(z[..., 0:1]), z[..., 1:]), dim=1)
 
             reparametrized.append(Reparametrized(q_z, p_z, z, data))
 
@@ -140,8 +140,8 @@ class ModelVAE(torch.nn.Module):
             # Numerically more stable.
             z, log_q_z_x_, log_p_z_ = component.sampling_procedure.rsample_log_probs(sample_shape, q_z, p_z)
 
-            if 0 == i:
-                z = torch.cat((torch.relu(z[..., 0:1]), z[..., 1:]), dim=1)
+            # if 0 == i:
+                # z = torch.cat((torch.relu(z[..., 0:1]), z[..., 1:]), dim=1)
 
             zs.append(z)
 
