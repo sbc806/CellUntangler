@@ -32,8 +32,9 @@ class NBVAE(ModelVAE):
     def __init__(self, h_dim: int, components: List[Component],
                  mask,
                  dataset: VaeDataset,
-                 scalar_parametrization: bool) -> None:
-        super().__init__(h_dim, components, mask, dataset, scalar_parametrization)
+                 scalar_parametrization: bool,
+                 use_relu: bool) -> None:
+        super().__init__(h_dim, components, mask, dataset, scalar_parametrization, use_relu)
 
         self.in_dim = dataset.in_dim
         self.h_dim = h_dim

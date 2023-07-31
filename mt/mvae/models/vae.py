@@ -44,7 +44,8 @@ class ModelVAE(torch.nn.Module):
     def __init__(self, h_dim: int, components: List[Component],
                  mask,
                  dataset: VaeDataset,
-                 scalar_parametrization: bool) -> None:
+                 scalar_parametrization: bool,
+                 use_relu: bool) -> None:
         """
         ModelVAE initializer
         :param h_dim: dimension of the hidden layers
@@ -53,6 +54,12 @@ class ModelVAE(torch.nn.Module):
         super().__init__()
         self.device = torch.device("cpu")
         self.components = nn.ModuleList(components)
+
+        self.use_relu = use_relu
+        if self.use_relu:
+          print("Using relu in forward() and log_likelihood.")
+        else:
+          print("Not using relu in forward() and log_likelihood().")
 
         self.mask = mask
         self.num_gene = torch.sum(self.mask > 0, 1)
@@ -95,8 +102,9 @@ class ModelVAE(torch.nn.Module):
             q_z, p_z, _ = component(x_encoded)
             z, data = q_z.rsample_with_parts()
 
-            # if 0 == i:
-                # z = torch.cat((torch.relu(z[..., 0:1]), z[..., 1:]), dim=1)
+            if self.use_relu:
+                if 0 == i:
+                    z = torch.cat((torch.relu(z[..., 0:1]), z[..., 1:]), dim=1)
 
             reparametrized.append(Reparametrized(q_z, p_z, z, data))
 
@@ -140,8 +148,9 @@ class ModelVAE(torch.nn.Module):
             # Numerically more stable.
             z, log_q_z_x_, log_p_z_ = component.sampling_procedure.rsample_log_probs(sample_shape, q_z, p_z)
 
-            # if 0 == i:
-                # z = torch.cat((torch.relu(z[..., 0:1]), z[..., 1:]), dim=1)
+            if self.use_relu:
+                if 0 == i:
+                    z = torch.cat((torch.relu(z[..., 0:1]), z[..., 1:]), dim=1)
 
             zs.append(z)
 
