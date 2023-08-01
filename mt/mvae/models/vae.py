@@ -60,7 +60,7 @@ class ModelVAE(torch.nn.Module):
           print("Using relu in forward() and log_likelihood.")
         else:
           print("Not using relu in forward() and log_likelihood().")
-
+        print("Commented out the normalization step in forward() and log_likelihood.")
         self.mask = mask
         self.num_gene = torch.sum(self.mask > 0, 1)
 
@@ -95,8 +95,8 @@ class ModelVAE(torch.nn.Module):
             x_mask = x * self.mask[i]
 
             # Normalization is important for PCA, does not so for NN?
-            if i < 1:
-                x_mask = torch.nn.functional.normalize(x_mask, p=2, dim=-1)
+            # if i < 1:
+                # x_mask = torch.nn.functional.normalize(x_mask, p=2, dim=-1)
             x_encoded = self.encode(x_mask)
 
             q_z, p_z, _ = component(x_encoded)
@@ -139,8 +139,8 @@ class ModelVAE(torch.nn.Module):
         x1 = torch.log1p(x)
         for i, component in enumerate(self.components):
             x_mask = x1 * self.mask[i]
-            if i < 1:
-                x_mask = torch.nn.functional.normalize(x_mask, p=2, dim=0)
+            # if i < 1:
+                # x_mask = torch.nn.functional.normalize(x_mask, p=2, dim=0)
             x_encoded = self.encode(x_mask)
 
             q_z, p_z, z_params = component(x_encoded)
