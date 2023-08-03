@@ -18,7 +18,7 @@ from typing import Any, Tuple, Optional
 import torch
 from torch import Tensor
 
-from .wrapped_distributions import VaeDistribution, EuclideanNormal
+from .wrapped_distributions import VaeDistribution, EuclideanNormal, EuclideanMultivariateNormal
 from ..ops import Manifold, StereographicallyProjectedSphere, PoincareBall
 
 
@@ -33,6 +33,7 @@ class RotatedWrappedNormal(torch.distributions.Distribution, VaeDistribution):
     def __init__(self, loc: Tensor, scale: Tensor, manifold: Manifold, *args: Any, **kwargs: Any) -> None:
         # super().__init__(*args, **kwargs)
 
+        # Create rotation matrix R
         target_axis = loc[..., 1:]
         base_axis = torch.zeros(
           target_axis.size()
@@ -60,23 +61,32 @@ class RotatedWrappedNormal(torch.distributions.Distribution, VaeDistribution):
         assert loc.shape[:-1] == scale.shape[:-1]
         assert tangent_dim == scale.shape[-1]
 
+        # Create covariance matrix and rotate it with R
         covar = torch.diag(scale)
+        print(covar)
         covar = (R * covar[..., None, :]).matmul(R.transpose(-1, -2))
-
+        print(covar)
+        
         self.loc = loc
-        self.scale = scale
+        # self.scale = scale
+        self.covar = covar
         self.manifold = manifold
         self.device = self.loc.device
         smaller_shape = self.loc.shape[:-1] + torch.Size([tangent_dim])
-        self.normal = EuclideanNormal(torch.zeros(smaller_shape, device=self.device), scale, *args, **kwargs)
+        # self.normal = EuclideanNormal(torch.zeros(smaller_shape, device=self.device), scale, *args, **kwargs)
+        self.normal = EuclideanMultivariateNormal(torch.zeros(smaller_shape, device=self.device), covar, *args, **kwargs)
 
     @property
     def mean(self) -> Tensor:
         return self.loc
 
+    # @property
+    # def stddev(self) -> Tensor:
+        # return self.scale
+
     @property
-    def stddev(self) -> Tensor:
-        return self.scale
+    def covar(self) -> Tensor:
+      return self.covar
 
     def rsample_with_parts(self, shape: torch.Size = torch.Size()) -> Tuple[Tensor, Tuple[Tensor, ...]]:
         # v ~ N(0, \Sigma)

@@ -46,3 +46,10 @@ class EuclideanUniform(torch.distributions.Uniform, VaeDistribution):
 
     def log_prob(self, value: Tensor) -> Tensor:
         return super().log_prob(value).sum(dim=-1)
+
+
+class EuclideanMultivariateNormal(torch.distributions.MultivariateNormal, VaeDistribution):
+
+    def log_prob(self, value: Tensor) -> Tensor:
+        # No summation in RoWN/distribution.py?
+        return super().log_prob(value)
