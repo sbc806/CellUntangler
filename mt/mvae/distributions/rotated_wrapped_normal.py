@@ -60,6 +60,9 @@ class RotatedWrappedNormal(torch.distributions.Distribution, VaeDistribution):
         assert loc.shape[:-1] == scale.shape[:-1]
         assert tangent_dim == scale.shape[-1]
 
+        covar = torch.diag(scale)
+        covar = (R * covar[..., None, :]).matmul(R.transpose(-1, -2))
+
         self.loc = loc
         self.scale = scale
         self.manifold = manifold
