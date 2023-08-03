@@ -33,6 +33,13 @@ class RotatedWrappedNormal(torch.distributions.Distribution, VaeDistribution):
     def __init__(self, loc: Tensor, scale: Tensor, manifold: Manifold, *args: Any, **kwargs: Any) -> None:
         # super().__init__(*args, **kwargs)
 
+        target_axis = loc[..., 1:]
+        base_axis = torch.zeros(
+          target_axis.size()
+        )
+        base_axis[..., 0] = torch.where(target_axis[..., 0] >= 0, 1, -1)
+        R = rotation_matrix(base_axis, target_axis)
+
         self.dim = loc.shape[-1]
 
         # is projected?
@@ -106,3 +113,16 @@ class RotatedWrappedNormal(torch.distributions.Distribution, VaeDistribution):
     def rsample_log_prob(self, shape: torch.Size = torch.Size()) -> Tuple[Tensor, Tensor]:
         z, data = self.rsample_with_parts(shape)
         return z, self.log_prob_from_parts(z, data)
+
+
+def rotation_matrix(x, y):
+    dim = x.size(-1)
+    x = x / (x.norm(dim=-1, keepdim=True) + 1e-9)
+    y = y / (y.norm(dim=-1, keepdim=True) + 1e-9)
+
+    x = x[..., None]
+    y = y[..., None]
+    I = torch.eye(dim, device=x.device)
+    tmp = y.matmul(x.transpose(-1, -2)) - x.matmul(y.transpose(-1, -2))
+    R = I + tmp + 1 / (1 + (y * x).sum([-1, -2], keepdim=True)) * tmp.matmul(tmp)
+    return R
