@@ -54,21 +54,20 @@ class RotatedWrappedNormal(torch.distributions.Distribution, VaeDistribution):
         assert tangent_dim == scale.shape[-1]
 
         # Create rotation matrix R
-        target_axis = torch.unsqueeze(loc, dim=0)[..., 1:]
+        target_axis = loc[..., 1:]
         base_axis = torch.zeros(
           target_axis.size()
         )
-        # print("loc:", loc)
+        print("loc:", loc)
         base_axis[..., 0] = torch.where(target_axis[..., 0] >= 0, 1, -1)
-        # print("target_axis:", target_axis)
-        # print("base_axis:", base_axis)
+        print("target_axis:", target_axis)
+        print("base_axis:", base_axis)
         R = rotation_matrix(base_axis, target_axis)
         # Create covariance matrix and rotate it with R
-        covar = torch.unsqueeze(scale, dim=0)
-        # print("covar before:", covar, covar.shape)
-        # print("R:", R, R.shape)
+        print("covar before:", covar, covar.shape)
+        print("R:", R, R.shape)
         covar = (R * covar[..., None, :]).matmul(R.transpose(-1, -2))
-        # print("covar after:", covar, covar.shape)
+        print("covar after:", covar, covar.shape)
         
         self.loc = loc
         # self.scale = scale
@@ -77,7 +76,7 @@ class RotatedWrappedNormal(torch.distributions.Distribution, VaeDistribution):
         self.device = self.loc.device
         smaller_shape = self.loc.shape[:-1] + torch.Size([tangent_dim])
         # self.normal = EuclideanNormal(torch.zeros(smaller_shape, device=self.device), scale, *args, **kwargs)
-        self.normal = EuclideanMultivariateNormal(torch.unsqueeze(torch.zeros(smaller_shape, device=self.device), dim=0),
+        self.normal = EuclideanMultivariateNormal(torch.zeros(smaller_shape, device=self.device),
           covar,
           *args, 
           **kwargs)
