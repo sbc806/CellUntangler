@@ -64,6 +64,7 @@ class RotatedWrappedNormal(torch.distributions.Distribution, VaeDistribution):
         print("base_axis:", base_axis)
         R = rotation_matrix(base_axis, target_axis)
         # Create covariance matrix and rotate it with R
+        covar = scale
         print("covar before:", covar, covar.shape)
         print("R:", R, R.shape)
         covar = (R * covar[..., None, :]).matmul(R.transpose(-1, -2))
