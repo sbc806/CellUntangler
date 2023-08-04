@@ -54,7 +54,7 @@ class RotatedWrappedNormal(torch.distributions.Distribution, VaeDistribution):
         assert tangent_dim == scale.shape[-1]
 
         # Create rotation matrix R
-        target_axis = loc[..., 1:]
+        target_axis = torch.unsqueeze(loc, dim=0)[..., 1:]
         base_axis = torch.zeros(
           target_axis.size()
         )
@@ -77,7 +77,10 @@ class RotatedWrappedNormal(torch.distributions.Distribution, VaeDistribution):
         self.device = self.loc.device
         smaller_shape = self.loc.shape[:-1] + torch.Size([tangent_dim])
         # self.normal = EuclideanNormal(torch.zeros(smaller_shape, device=self.device), scale, *args, **kwargs)
-        self.normal = EuclideanMultivariateNormal(torch.zeros(smaller_shape, device=self.device), covar, *args, **kwargs)
+        self.normal = EuclideanMultivariateNormal(torch.unsqueeze(torch.zeros(smaller_shape, device=self.device), dim=0),
+          covar,
+          *args, 
+          **kwargs)
 
     @property
     def mean(self) -> Tensor:
