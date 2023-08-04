@@ -72,7 +72,7 @@ class RotatedWrappedNormal(torch.distributions.Distribution, VaeDistribution):
         
         self.loc = loc
         # self.scale = scale
-        self.covar = covar
+        self.scale = covar
         self.manifold = manifold
         self.device = self.loc.device
         smaller_shape = self.loc.shape[:-1] + torch.Size([tangent_dim])
