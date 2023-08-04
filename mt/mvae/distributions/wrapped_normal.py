@@ -32,7 +32,8 @@ class WrappedNormal(torch.distributions.Distribution, VaeDistribution):
 
     def __init__(self, loc: Tensor, scale: Tensor, manifold: Manifold, *args: Any, **kwargs: Any) -> None:
         # super().__init__(*args, **kwargs)
-
+        print("loc initially:", loc, loc.shape)
+        print("scale initially:", scale, scale.shape)
         self.dim = loc.shape[-1]
 
         # is projected?
@@ -48,7 +49,7 @@ class WrappedNormal(torch.distributions.Distribution, VaeDistribution):
             s = [1] * len(scale.shape)
             s[-1] = tangent_dim
             scale = scale.repeat(s)  # Expand scalar scale to vector.
-
+        print("scale after:", scale)
         # Loc has to be one dim bigger than scale or equal (in projected spaces).
         assert loc.shape[:-1] == scale.shape[:-1]
         assert tangent_dim == scale.shape[-1]
@@ -59,6 +60,8 @@ class WrappedNormal(torch.distributions.Distribution, VaeDistribution):
         self.device = self.loc.device
         smaller_shape = self.loc.shape[:-1] + torch.Size([tangent_dim])
         self.normal = EuclideanNormal(torch.zeros(smaller_shape, device=self.device), scale, *args, **kwargs)
+        print(smaller_shape)
+        print(torch.zeros(smaller_shape), torch.zeros(smaller_shape.shape))
 
     @property
     def mean(self) -> Tensor:
