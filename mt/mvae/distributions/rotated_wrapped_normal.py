@@ -58,17 +58,17 @@ class RotatedWrappedNormal(torch.distributions.Distribution, VaeDistribution):
         base_axis = torch.zeros(
           target_axis.size()
         )
-        print("loc:", loc)
+        # print("loc:", loc)
         base_axis[..., 0] = torch.where(target_axis[..., 0] >= 0, 1, -1)
-        print("target_axis:", target_axis)
-        print("base_axis:", base_axis)
+        # print("target_axis:", target_axis)
+        # print("base_axis:", base_axis)
         R = rotation_matrix(base_axis, target_axis)
         # Create covariance matrix and rotate it with R
         covar = torch.unsqueeze(scale, dim=0)
-        print("covar before:", covar, covar.shape)
-        print("R:", R, R.shape)
+        # print("covar before:", covar, covar.shape)
+        # print("R:", R, R.shape)
         covar = (R * covar[..., None, :]).matmul(R.transpose(-1, -2))
-        print("covar after:", covar, covar.shape)
+        # print("covar after:", covar, covar.shape)
         
         self.loc = loc
         # self.scale = scale
