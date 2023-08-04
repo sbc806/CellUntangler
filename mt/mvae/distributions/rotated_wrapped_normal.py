@@ -33,14 +33,6 @@ class RotatedWrappedNormal(torch.distributions.Distribution, VaeDistribution):
     def __init__(self, loc: Tensor, scale: Tensor, manifold: Manifold, *args: Any, **kwargs: Any) -> None:
         # super().__init__(*args, **kwargs)
 
-        # Create rotation matrix R
-        target_axis = loc[..., 1:]
-        base_axis = torch.zeros(
-          target_axis.size()
-        )
-        base_axis[..., 0] = torch.where(target_axis[..., 0] >= 0, 1, -1)
-        R = rotation_matrix(base_axis, target_axis)
-
         self.dim = loc.shape[-1]
 
         # is projected?
@@ -61,6 +53,13 @@ class RotatedWrappedNormal(torch.distributions.Distribution, VaeDistribution):
         assert loc.shape[:-1] == scale.shape[:-1]
         assert tangent_dim == scale.shape[-1]
 
+        # Create rotation matrix R
+        target_axis = loc[..., 1:]
+        base_axis = torch.zeros(
+          target_axis.size()
+        )
+        base_axis[..., 0] = torch.where(target_axis[..., 0] >= 0, 1, -1)
+        R = rotation_matrix(base_axis, target_axis)
         # Create covariance matrix and rotate it with R
         covar = torch.diag(scale)
         print(covar)
