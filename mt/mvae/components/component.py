@@ -129,6 +129,23 @@ class HyperbolicComponent(Component):
     def true_dim(self) -> int:
         return self.dim - 1
 
+class RotatedHyperbolicComponent(Component):
+
+    def __init__(self,
+                 dim: int,
+                 fixed_curvature: bool,
+                 sampling_procedure: Type[SamplingProcedure[Q, P]],
+                 radius: float=1.0) -> None:
+        # Add one to the dimension here on purpose.
+        super().__init__(dim + 1, fixed_curvature, sampling_procedure)
+        self._nradius = torch.nn.Parameter(torch.tensor(radius), requires_grad=not fixed_curvature)
+
+    def create_manifold(self) -> Manifold:
+        return Hyperboloid(lambda: self._nradius)
+    
+    @property
+    def true_dim(self) -> int:
+        return self.dim - 1
 
 class PoincareComponent(Component):
 
