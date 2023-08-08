@@ -20,7 +20,7 @@ from torch import Tensor
 from torch.distributions import Distribution
 
 from ..ops import Manifold
-from ..distributions import RadiusVonMisesFisher, HypersphericalUniform, WrappedNormal, EuclideanNormal
+from ..distributions import RadiusVonMisesFisher, HypersphericalUniform, WrappedNormal, EuclideanNormal, RotatedWrappedNormal
 from ..distributions import EuclideanUniform, RadiusProjectedVonMisesFisher, RiemannianNormal
 from ..ops import spherical_projected as SP
 
@@ -110,6 +110,34 @@ class WrappedNormalProcedure(SamplingProcedure[WrappedNormal, WrappedNormal]):
         return z, log_q_z_x_, log_p_z_
 
     def _log_prob(self, q_z: WrappedNormal, p_z: WrappedNormal, z: Tensor,
+                  posterior_parts: Tuple[Tensor, ...]) -> Tuple[Tensor, Tensor]:
+        log_q_z_x_ = q_z.log_prob_from_parts(z, posterior_parts)
+        log_p_z_ = p_z.log_prob(z)
+        return log_q_z_x_, log_p_z_
+
+
+class RotatedWrappedNormalProcedure(SamplingProcedure[RotatedWrappedNormal, RotatedWrappedNormal]):
+
+    def reparameterize(self, z_mean: Tensor, std: Tensor) -> Tuple[RotatedWrappedNormal, WrappedNormal]:
+        q_z = RotatedWrappedNormal(z_mean, std, manifold=self._manifold)
+
+        mu_0 = self._manifold.mu_0(z_mean.shape, device=z_mean.device)
+        std_0 = torch.ones_like(std, device=z_mean.device)
+        p_z = RotatedWrappedNormal(mu_0, std_0, manifold=self._manifold)
+        return q_z, p_z     
+
+    def kl_loss(self, q_z: RotatedWrappedNormal, p_z: RotatedWrappedNormal, z: Tensor, data: Tuple[Tensor, ...]) -> Tensor:
+        logqz, logpz = self._log_prob(q_z, p_z, z, data)
+        KLD = logqz - logpz
+        return KLD
+
+    def rsample_log_probs(self, sample_shape: torch.Size, q_z: RotatedWrappedNormal,
+                          p_z: RotatedWrappedNormal) -> Tuple[Tensor, Tensor, Tensor]:
+        z, posterior_parts = q_z.rsample_with_parts(sample_shape)
+        log_q_z_x_, log_p_z_ = self._log_prob(q_z, p_z, z, posterior_parts)
+        return z, log_q_z_x_, log_p_z_
+
+    def _log_prob(self, q_z: RotatedWrappedNormal, p_z: RotatedWrappedNormal, z: Tensor,
                   posterior_parts: Tuple[Tensor, ...]) -> Tuple[Tensor, Tensor]:
         log_q_z_x_ = q_z.log_prob_from_parts(z, posterior_parts)
         log_p_z_ = p_z.log_prob(z)
