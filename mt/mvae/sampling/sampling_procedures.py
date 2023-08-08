@@ -119,7 +119,7 @@ class WrappedNormalProcedure(SamplingProcedure[WrappedNormal, WrappedNormal]):
 
 class RotatedWrappedNormalProcedure(SamplingProcedure[RotatedWrappedNormal, RotatedWrappedNormal]):
 
-    def reparameterize(self, z_mean: Tensor, std: Tensor) -> Tuple[RotatedWrappedNormal, WrappedNormal]:
+    def reparametrize(self, z_mean: Tensor, std: Tensor) -> Tuple[RotatedWrappedNormal, WrappedNormal]:
         q_z = RotatedWrappedNormal(z_mean, std, manifold=self._manifold)
 
         mu_0 = self._manifold.mu_0(z_mean.shape, device=z_mean.device)
