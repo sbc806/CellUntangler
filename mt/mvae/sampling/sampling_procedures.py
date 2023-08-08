@@ -21,7 +21,7 @@ from torch.distributions import Distribution
 
 from ..ops import Manifold
 from ..distributions import RadiusVonMisesFisher, HypersphericalUniform, WrappedNormal, EuclideanNormal
-from mt.mvae.rotated_wrapped_normal import RotatedWrappedNormal
+from ..distributions.rotated_wrapped_normal import RotatedWrappedNormal
 from ..distributions import EuclideanUniform, RadiusProjectedVonMisesFisher, RiemannianNormal
 from ..ops import spherical_projected as SP
 
