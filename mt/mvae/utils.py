@@ -22,7 +22,8 @@ import torch.backends.cudnn
 from torch.optim import Optimizer
 
 from .components import Component, ConstantComponent, EuclideanComponent, StereographicallyProjectedSphereComponent
-from .components import SphericalComponent, UniversalComponent, HyperbolicComponent, PoincareComponent, RotatedHyperbolicComponent
+from .components import SphericalComponent, UniversalComponent, HyperbolicComponent, PoincareComponent
+from .components.component import RotatedHyperbolicComponent
 from .sampling import WrappedNormalProcedure, EuclideanNormalProcedure, EuclideanConstantProcedure, RotatedWrappedNormalProcedure
 from .sampling import UniversalSamplingProcedure
 # from .sampling import SphericalVmfProcedure, ProjectedSphericalVmfProcedure, RiemannianNormalProcedure
