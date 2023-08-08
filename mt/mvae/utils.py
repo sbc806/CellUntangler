@@ -26,7 +26,7 @@ from .components import SphericalComponent, UniversalComponent, HyperbolicCompon
 from .components.component import RotatedHyperbolicComponent
 from .sampling import WrappedNormalProcedure, EuclideanNormalProcedure, EuclideanConstantProcedure
 from .sampling import UniversalSamplingProcedure
-from .sampling.sampling_procedure import RotatedWrappedNormalProcedure
+from .sampling.sampling_procedures import RotatedWrappedNormalProcedure
 # from .sampling import SphericalVmfProcedure, ProjectedSphericalVmfProcedure, RiemannianNormalProcedure
 
 space_creator_map = {
