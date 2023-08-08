@@ -127,6 +127,7 @@ class RotatedWrappedNormalProcedure(SamplingProcedure[RotatedWrappedNormal, Rota
         p_z = RotatedWrappedNormal(mu_0, std_0, manifold=self._manifold)
         print("mu_0.shape:", mu_0.shape)
         print("std_0.shape:", std_0.shape)
+        print(p_z.normal)
         return q_z, p_z     
 
     def kl_loss(self, q_z: RotatedWrappedNormal, p_z: RotatedWrappedNormal, z: Tensor, data: Tuple[Tensor, ...]) -> Tensor:
