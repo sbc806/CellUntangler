@@ -92,7 +92,7 @@ class RotatedWrappedNormal(torch.distributions.Distribution, VaeDistribution):
 
     @property
     def covar(self) -> Tensor:
-      return self.covar
+      return self.scale
 
     def rsample_with_parts(self, shape: torch.Size = torch.Size()) -> Tuple[Tensor, Tuple[Tensor, ...]]:
         # v ~ N(0, \Sigma)
