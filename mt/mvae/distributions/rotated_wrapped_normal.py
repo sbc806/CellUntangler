@@ -130,8 +130,6 @@ class RotatedWrappedNormal(torch.distributions.Distribution, VaeDistribution):
         return self.log_prob_from_parts(z, data)
 
     def rsample_log_prob(self, shape: torch.Size = torch.Size()) -> Tuple[Tensor, Tensor]:
-        print("z.shape:", z.shape)
-        print("data.shape:", data.shape)
         z, data = self.rsample_with_parts(shape)
         return z, self.log_prob_from_parts(z, data)
 
