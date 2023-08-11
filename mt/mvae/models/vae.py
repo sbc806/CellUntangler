@@ -103,22 +103,22 @@ class ModelVAE(torch.nn.Module):
         for i, component in enumerate(self.components):
             x_mask = x * self.mask[i]
 
-            # if self.cell_cycle_components:
+            if self.cell_cycle_components:
                 # New code
-                # if self.cell_cycle_components[i]:
-                    # x_mask = torch.nn.functional.normalize(x_mask, p=2, dim=-1)
-            # else:
+                if self.cell_cycle_components[i]:
+                    x_mask = torch.nn.functional.normalize(x_mask, p=2, dim=-1)
+            else:
                 # Old code
                 # Normalization is important for PCA, does not so for NN?
-                # if i < 1:
-                  # x_mask = torch.nn.functional.normalize(x_mask, p=2, dim=-1)
+                if i < 1:
+                  x_mask = torch.nn.functional.normalize(x_mask, p=2, dim=-1)
             x_encoded = self.encode(x_mask)
 
             q_z, p_z, _ = component(x_encoded)
             z, data = q_z.rsample_with_parts()
 
-            # if 0 == i:
-                # z = torch.cat((torch.relu(z[..., 0:1]), z[..., 1:]), dim=1)
+            if 0 == i:
+                z = torch.cat((torch.relu(z[..., 0:1]), z[..., 1:]), dim=1)
 
             # If the second component, e1, then clip value
             if 1 == i:
@@ -157,14 +157,14 @@ class ModelVAE(torch.nn.Module):
         x1 = torch.log1p(x)
         for i, component in enumerate(self.components):
             x_mask = x1 * self.mask[i]
-            # if self.cell_cycle_components:
+            if self.cell_cycle_components:
                 # New code
-                # if self.cell_cycle_components[i]:
-                    # x_mask = torch.nn.functional.normalize(x_mask, p=2, dim=0)
-            # else:
+                if self.cell_cycle_components[i]:
+                    x_mask = torch.nn.functional.normalize(x_mask, p=2, dim=0)
+            else:
                 # Old code
-                # if i < 1:
-                    # x_mask = torch.nn.functional.normalize(x_mask, p=2, dim=0)
+                if i < 1:
+                    x_mask = torch.nn.functional.normalize(x_mask, p=2, dim=0)
             x_encoded = self.encode(x_mask)
 
             q_z, p_z, z_params = component(x_encoded)
@@ -172,8 +172,8 @@ class ModelVAE(torch.nn.Module):
             # Numerically more stable.
             z, log_q_z_x_, log_p_z_ = component.sampling_procedure.rsample_log_probs(sample_shape, q_z, p_z)
 
-            # if 0 == i:
-                # z = torch.cat((torch.relu(z[..., 0:1]), z[..., 1:]), dim=1)
+            if 0 == i:
+                z = torch.cat((torch.relu(z[..., 0:1]), z[..., 1:]), dim=1)
 
             if 1 == i:
                 z = torch.clip(z, -0.5, 0.5)
