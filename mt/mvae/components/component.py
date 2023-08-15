@@ -137,7 +137,7 @@ class RotatedHyperbolicComponent(Component):
                  dim: int,
                  fixed_curvature: bool,
                  sampling_procedure: Type[SamplingProcedure[Q, P]],
-                 radius: float=1.0) -> None:
+                 radius: float=1.0/math.sqrt(3.0)) -> None:
         # Add one to the dimension here on purpose.
         super().__init__(dim + 1, fixed_curvature, sampling_procedure)
         self._nradius = torch.nn.Parameter(torch.tensor(radius), requires_grad=not fixed_curvature)
