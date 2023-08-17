@@ -129,10 +129,10 @@ class RotatedWrappedNormalProcedure(SamplingProcedure[RotatedWrappedNormal, Rota
         mu_0 = self._manifold.mu_0(torch.Size([1, z_mean.shape[-1]]))
         std_0 = torch.ones(1, std.shape[-1])
         p_z = RotatedWrappedNormal(mu_0, std_0, manifold=self._manifold)
-        print("mu_0.shape:", mu_0.shape)
-        print("std_0.shape:", std_0.shape)
-        print(p_z.normal)
-        print(p_z.normal.loc, p_z.normal.covariance_matrix)
+        # print("mu_0.shape:", mu_0.shape)
+        # print("std_0.shape:", std_0.shape)
+        # print(p_z.normal)
+        # print(p_z.normal.loc, p_z.normal.covariance_matrix)
         return q_z, p_z     
 
     def kl_loss(self, q_z: RotatedWrappedNormal, p_z: RotatedWrappedNormal, z: Tensor, data: Tuple[Tensor, ...]) -> Tensor:

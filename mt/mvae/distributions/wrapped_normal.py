@@ -60,7 +60,7 @@ class WrappedNormal(torch.distributions.Distribution, VaeDistribution):
         self.device = self.loc.device
         smaller_shape = self.loc.shape[:-1] + torch.Size([tangent_dim])
         self.normal = EuclideanNormal(torch.zeros(smaller_shape, device=self.device), scale, *args, **kwargs)
-        print(smaller_shape)
+        # print(smaller_shape)
         print(torch.zeros(smaller_shape), torch.zeros(smaller_shape).shape)
 
     @property
