@@ -114,12 +114,26 @@ class ModelVAE(torch.nn.Module):
         mu1 = mu1[:, :self.num_gene[0]]
         sigma_square1 = sigma_square1[:self.num_gene[0]]
 
-        mu, sigma_square = self.decode(concat_z)
+        print("Using new_reparametrized")
+        new_reparametrized = [self.compute_r2(x)] + reparametrized[1:]        
+        new_concat_z = torch.cat(tuple(x.z for x in reparametrized), dim=-1)
+
+        # mu, sigma_square = self.decode(concat_z)
+        mu, sigma_square = self.decode(new_concat_z)
         mu = torch.cat((mu1, mu[:, self.num_gene[0]:]), dim=-1)
         sigma_square = torch.cat(
             (sigma_square1, sigma_square[self.num_gene[0]:]), dim=-1)
 
-        return reparametrized, concat_z, mu, sigma_square
+        return reparametrized, concat_z, mu, sigma_square, new_concat_z
+
+    @torch.no_grad()
+    def compute_r2(self, x):
+        x_mask = x * self.mask[0]
+        x_encoded = self.encode(x_mask)
+
+        q_z, p_z, _ = self.components[0](x_encoded)
+        z, data = q_z.rsample_with_parts()
+        return Reparametrized(q_z, p_z, z, data)
 
     def log_likelihood(self, x: Tensor, n: int = 500) -> Tuple[Tensor, Tensor, Tensor]:
         """
