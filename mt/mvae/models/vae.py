@@ -114,9 +114,9 @@ class ModelVAE(torch.nn.Module):
         mu1 = mu1[:, :self.num_gene[0]]
         sigma_square1 = sigma_square1[:self.num_gene[0]]
 
-        print("Using new_reparametrized")
+        print("Using new_reparametrized and new_concat_z")
         new_reparametrized = [self.compute_r2(x)] + reparametrized[1:]        
-        new_concat_z = torch.cat(tuple(x.z for x in reparametrized), dim=-1)
+        new_concat_z = torch.cat(tuple(x.z for x in new_reparametrized), dim=-1)
 
         # mu, sigma_square = self.decode(concat_z)
         mu, sigma_square = self.decode(new_concat_z)
