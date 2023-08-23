@@ -114,17 +114,17 @@ class ModelVAE(torch.nn.Module):
         mu1 = mu1[:, :self.num_gene[0]]
         sigma_square1 = sigma_square1[:self.num_gene[0]]
 
-        print("Using new_reparametrized and new_concat_z")
-        new_reparametrized = [self.compute_r2(x)] + reparametrized[1:]        
-        new_concat_z = torch.cat(tuple(x.z for x in new_reparametrized), dim=-1)
+        # print("Using new_reparametrized and new_concat_z")
+        # new_reparametrized = [self.compute_r2(x)] + reparametrized[1:]        
+        # new_concat_z = torch.cat(tuple(x.z for x in new_reparametrized), dim=-1)
 
-        # mu, sigma_square = self.decode(concat_z)
-        mu, sigma_square = self.decode(new_concat_z)
+        mu, sigma_square = self.decode(concat_z)
+        # mu, sigma_square = self.decode(new_concat_z)
         mu = torch.cat((mu1, mu[:, self.num_gene[0]:]), dim=-1)
         sigma_square = torch.cat(
             (sigma_square1, sigma_square[self.num_gene[0]:]), dim=-1)
 
-        return reparametrized, concat_z, mu, sigma_square, new_concat_z
+        return reparametrized, concat_z, mu, sigma_square
 
     @torch.no_grad()
     def compute_r2(self, x):
@@ -236,7 +236,7 @@ class ModelVAE(torch.nn.Module):
         library_size = torch.sum(x_mb, dim=1)
 
         x_mb = x_mb.to(self.device)
-        reparametrized, concat_z, x_mb_, sigma_square_, concat_z_new = self(torch.log1p(x_mb))
+        reparametrized, concat_z, x_mb_, sigma_square_ = self(torch.log1p(x_mb))
 
         x_mb_ = x_mb_ * library_size[:, None]
 
