@@ -45,11 +45,12 @@ class ModelVAE(torch.nn.Module):
                  mask,
                  dataset: VaeDataset,
                  scalar_parametrization: bool,
-                 use_relu: bool) -> None:
+                 cell_cycle_components=[]) -> None:
         """
         ModelVAE initializer
         :param h_dim: dimension of the hidden layers
         :param components: dimension of the latent representation (spherical, hyperbolic, euclidean)
+        :cell_cycle_components: A list with True if the component is for the cell cycle and False otherwise.
         """
         super().__init__()
         self.device = torch.device("cpu")
@@ -68,15 +69,29 @@ class ModelVAE(torch.nn.Module):
         dim_all = [i.dim for i in self.components]
         dim_z = sum(dim_all)
 
-        mask_z = np.zeros(dim_z)
-        mask_z[:dim_all[0]] = 1
-        self.mask_z = torch.tensor(mask_z)
+        if cell_cycle_components:
+            # New code
+            mask_z = np.zeros(dim_z)
+            start = 0
+            for i in range(0, len(cell_cycle_components)):
+              if cell_cycle_components[i]:
+                mask_z[start: start + dim_all[i]] = 1
+              start = start + dim_all[i]
+            self.mask_z = torch.tensor(mask_z)
+        else:
+            # Old code
+            mask_z = np.zeros(dim_z)
+            mask_z[:dim_all[0]] = 1
+            self.mask_z = torch.tensor(mask_z)
+        print(self.mask_z)
 
         self.reconstruction_loss = dataset.reconstruction_loss  # dataset-dependent, not implemented
 
         self.total_z_dim = sum(component.dim for component in components)
         for component in components:
             component.init_layers(h_dim, scalar_parametrization=scalar_parametrization)
+
+        self.cell_cycle_components = cell_cycle_components
 
     def to(self, device: torch.device) -> "ModelVAE":
         self.device = device
@@ -94,10 +109,17 @@ class ModelVAE(torch.nn.Module):
 
         for i, component in enumerate(self.components):
             x_mask = x * self.mask[i]
+            
+            # if self.cell_cycle_components:
+                # New code
+                # if self.cell_cycle_components[i]:
+                    # x_mask = torch.nn.functional.normalize(x_mask, p=2, dim=-1)
+            # else:
+                # Old code
+                # Normalization is important for PCA, does not so for NN?
+                # if i < 1:
+                  # x_mask = torch.nn.functional.normalize(x_mask, p=2, dim=-1)
 
-            # Normalization is important for PCA, does not so for NN?
-            # if i < 1:
-                # x_mask = torch.nn.functional.normalize(x_mask, p=2, dim=-1)
             x_encoded = self.encode(x_mask)
 
             q_z, p_z, _ = component(x_encoded)
@@ -106,6 +128,10 @@ class ModelVAE(torch.nn.Module):
             if self.use_relu:
                 if 0 == i:
                     z = torch.cat((torch.relu(z[..., 0:1]), z[..., 1:]), dim=1)
+
+            # If the second component, e1, then clip value
+            # if 1 == i:
+              # z = torch.clip(z, -0.5, 0.5)
 
             reparametrized.append(Reparametrized(q_z, p_z, z, data))
 
@@ -154,18 +180,28 @@ class ModelVAE(torch.nn.Module):
         x1 = torch.log1p(x)
         for i, component in enumerate(self.components):
             x_mask = x1 * self.mask[i]
-            # if i < 1:
-                # x_mask = torch.nn.functional.normalize(x_mask, p=2, dim=0)
+            
+            # if self.cell_cycle_components:
+                # New code
+                # if self.cell_cycle_components[i]:
+                    # x_mask = torch.nn.functional.normalize(x_mask, p=2, dim=0)
+            # else:
+                # Old code
+                # if i < 1:
+                    # x_mask = torch.nn.functional.normalize(x_mask, p=2, dim=0)
+
             x_encoded = self.encode(x_mask)
 
             q_z, p_z, z_params = component(x_encoded)
 
             # Numerically more stable.
             z, log_q_z_x_, log_p_z_ = component.sampling_procedure.rsample_log_probs(sample_shape, q_z, p_z)
+            
+            # if 0 == i:
+                # z = torch.cat((torch.relu(z[..., 0:1]), z[..., 1:]), dim=1)
 
-            if self.use_relu:
-                if 0 == i:
-                    z = torch.cat((torch.relu(z[..., 0:1]), z[..., 1:]), dim=1)
+            # if 1 == i:
+                # z = torch.clip(z, -0.5, 0.5)
 
             zs.append(z)
 
@@ -214,7 +250,10 @@ class ModelVAE(torch.nn.Module):
         # assert (bce >= 0).all()
 
         component_kl = []
-        weight = [1.0, 1.0]
+        # Old code
+        # weight = [1.0, 1.0]
+        # New code
+        weight = [1.0 for component in self.components]
         for i, (component, r) in enumerate(zip(self.components, reparametrized)):
             kl_comp = component.kl_loss(r.q_z, r.p_z, r.z, r.data) * weight[i]
 

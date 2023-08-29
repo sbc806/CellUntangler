@@ -95,7 +95,7 @@ class WrappedNormalProcedure(SamplingProcedure[WrappedNormal, WrappedNormal]):
         q_z = WrappedNormal(z_mean, std, manifold=self._manifold)
 
         mu_0 = self._manifold.mu_0(z_mean.shape, device=z_mean.device)
-        std_0 = torch.ones_like(std, device=z_mean.device)
+        std_0 = torch.ones_like(std, device=z_mean.device)*0.1
         p_z = WrappedNormal(mu_0, std_0, manifold=self._manifold)
         return q_z, p_z
 
