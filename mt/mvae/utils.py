@@ -23,8 +23,10 @@ from torch.optim import Optimizer
 
 from .components import Component, ConstantComponent, EuclideanComponent, StereographicallyProjectedSphereComponent
 from .components import SphericalComponent, UniversalComponent, HyperbolicComponent, PoincareComponent
+from .components.component import RotatedHyperbolicComponent
 from .sampling import WrappedNormalProcedure, EuclideanNormalProcedure, EuclideanConstantProcedure
 from .sampling import UniversalSamplingProcedure
+from .sampling.sampling_procedures import RotatedWrappedNormalProcedure
 # from .sampling import SphericalVmfProcedure, ProjectedSphericalVmfProcedure, RiemannianNormalProcedure
 
 space_creator_map = {
@@ -35,6 +37,7 @@ space_creator_map = {
     "p": PoincareComponent,
     "c": ConstantComponent,
     "e": EuclideanComponent,
+    "r": RotatedHyperbolicComponent
 }
 
 sampling_procedure_map = {
@@ -45,6 +48,7 @@ sampling_procedure_map = {
     HyperbolicComponent: WrappedNormalProcedure,
     PoincareComponent: WrappedNormalProcedure,
     UniversalComponent: UniversalSamplingProcedure,
+    RotatedHyperbolicComponent: RotatedWrappedNormalProcedure
 }
 
 
