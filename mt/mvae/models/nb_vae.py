@@ -53,6 +53,9 @@ class NBVAE(ModelVAE):
         self.batch_invariant = batch_invariant
 
         total_num_of_batches = sum(n_batch)
+        print(f"{self.n_batch} in nb_vae.py")
+        print(f"batch_invariant: {self.batch_invariant}")
+        print(f"total_num_of_batches: {total_num_of_batches}")
         # multi-layer
         # http://adamlineberry.ai/vae-series/vae-code-experiments
         

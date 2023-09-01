@@ -59,7 +59,7 @@ class ModelVAE(torch.nn.Module):
         if type(n_batch) != list:
             n_batch = [n_batch]
         self.n_batch = n_batch
-
+        print(f"{self.n_batch} in vae.py")
         self.use_relu = use_relu
         if self.use_relu:
           print("Using relu in forward() and log_likelihood.")
@@ -101,6 +101,9 @@ class ModelVAE(torch.nn.Module):
             self.batch = self.multi_one_hot(batch, self.n_batch)
         else:
             self.batch = nn.functional.one_hot(batch[:, 0], self.n_batch[0])
+        print(batch)
+        print(self.batch.shape)
+        print(self.batch)
         for i, component in enumerate(self.components):
             x_mask = x * self.mask[i]
 
@@ -144,7 +147,7 @@ class ModelVAE(torch.nn.Module):
         z, data = q_z.rsample_with_parts()
         return Reparametrized(q_z, p_z, z, data)
 
-    def log_likelihood(self, x: Tensor, n: int = 500) -> Tuple[Tensor, Tensor, Tensor]:
+    def log_likelihood(self, x: Tensor, batch: Tensor, n: int = 500) -> Tuple[Tensor, Tensor, Tensor]:
         """
         :param x: Mini-batch of inputs.
         :param n: Number of MC samples
@@ -161,11 +164,15 @@ class ModelVAE(torch.nn.Module):
         zs = []
 
         x1 = torch.log1p(x)
+        if len(self.n_batch) > 1:
+            self.batch = self.multi_one_hot(batch, self.n_batch)
+        else:
+            self.batch = nn.functional.one_hot(batch[:, 0], self.n_batch[0])
         for i, component in enumerate(self.components):
             x_mask = x1 * self.mask[i]
             # if i < 1:
                 # x_mask = torch.nn.functional.normalize(x_mask, p=2, dim=0)
-            x_encoded = self.encode(x_mask)
+            x_encoded = self.encode(x_mask, self.batch)
 
             q_z, p_z, z_params = component(x_encoded)
 
@@ -182,7 +189,7 @@ class ModelVAE(torch.nn.Module):
             log_q_z_x += log_q_z_x_
 
         concat_z = torch.cat(zs, dim=-1)
-        mu_, sigma_squrare_ = self.decode(concat_z)
+        mu_, sigma_squrare_ = self.decode(concat_z, self.batch)
         mu_ = mu_ * library_size[:, None]
 
         x_orig = x.repeat((n, 1, 1))
@@ -208,6 +215,7 @@ class ModelVAE(torch.nn.Module):
     def compute_batch_stats(self,
                             x_mb: Tensor,
                             x_mb_: Tensor,
+                            batch: Tensor,
                             sigma_square_: Tensor,
                             reparametrized: List[Reparametrized],
                             beta: float,
@@ -234,7 +242,7 @@ class ModelVAE(torch.nn.Module):
         mi = None
         cov_norm = None
         if likelihood_n:
-            log_likelihood, mi, cov_norm = self.log_likelihood(x_mb, n=likelihood_n)
+            log_likelihood, mi, cov_norm = self.log_likelihood(x_mb, batch, n=likelihood_n)
 
         return BatchStats(bce, component_kl, beta, log_likelihood, mi, cov_norm)
 
@@ -251,7 +259,7 @@ class ModelVAE(torch.nn.Module):
         x_mb_ = x_mb_ * library_size[:, None]
 
         assert x_mb_.shape == x_mb.shape
-        batch_stats = self.compute_batch_stats(x_mb, x_mb_, sigma_square_,
+        batch_stats = self.compute_batch_stats(x_mb, x_mb_, y_mb, sigma_square_,
                                                reparametrized, likelihood_n=0, beta=beta)
 
         loss = -batch_stats.elbo  # Maximize elbo instead of minimizing it.
