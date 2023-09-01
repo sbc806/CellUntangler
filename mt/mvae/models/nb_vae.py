@@ -33,15 +33,33 @@ class NBVAE(ModelVAE):
                  mask,
                  dataset: VaeDataset,
                  scalar_parametrization: bool,
-                 use_relu: bool) -> None:
-        super().__init__(h_dim, components, mask, dataset, scalar_parametrization, use_relu)
+                 use_relu: bool,
+                 n_batch=None,
+                 batch_invariant=False) -> None:
+        super().__init__(h_dim,
+                         components,
+                         mask,
+                         dataset,
+                         scalar_parametrization,
+                         use_relu,
+                         n_batch)
 
         self.in_dim = dataset.in_dim
         self.h_dim = h_dim
 
+        if type(n_batch) != list:
+            n_batch = [n_batch]
+        self.n_batch = n_batch
+        self.batch_invariant = batch_invariant
+
+        total_num_of_batches = sum(n_batch)
         # multi-layer
         # http://adamlineberry.ai/vae-series/vae-code-experiments
-        encoder_szs = [dataset.in_dim] + [128, 64, h_dim]
+        
+        input_dim = dataset.in_dim
+        if not self.batch_invariant:
+            input_dim = dataset.in_dim + total_num_of_batches
+        encoder_szs = [input_dim] + [128, 64, h_dim]
         encoder_layers = []
         for in_sz, out_sz in zip(encoder_szs[:-1], encoder_szs[1:]):
             encoder_layers.append(nn.Linear(in_sz, out_sz))
@@ -51,7 +69,7 @@ class NBVAE(ModelVAE):
         self.encoder = nn.Sequential(*encoder_layers)
 
         # construct the decoder
-        hidden_sizes = [self.total_z_dim] + [64, 128]
+        hidden_sizes = [self.total_z_dim + total_num_of_batches] + [64, 128]
         decoder_layers = []
         for in_sz, out_sz in zip(hidden_sizes[:-1], hidden_sizes[1:]):
             decoder_layers.append(nn.Linear(in_sz, out_sz))
@@ -63,7 +81,7 @@ class NBVAE(ModelVAE):
         self.fc_mu = nn.Linear(128, dataset.in_dim)
         self.fc_sigma = nn.Linear(128, dataset.in_dim)
 
-    def encode(self, x: Tensor) -> Tensor:
+    def encode(self, x: Tensor, batch: Tensor) -> Tensor:
         x = x.squeeze()
 
         assert len(x.shape) == 2
@@ -72,14 +90,17 @@ class NBVAE(ModelVAE):
         assert dim == self.in_dim
         x = x.view(bs, self.in_dim)
 
+        if not self.batch_invariant:
+            x = torch.concat((x, batch), dim=1)
         x = self.encoder(x)
 
         return x.view(bs, -1)  # such that x is batch * dim, similar to reshape (no need)
 
-    def decode(self, concat_z: Tensor):
+    def decode(self, concat_z: Tensor, batch: Tensor):
         assert len(concat_z.shape) >= 2
         bs = concat_z.size(-2)
 
+        concat_z = torch.concat((concat_z, batch), dim=1)
         x = self.decoder(concat_z)
 
         mu = torch.nn.functional.softmax(self.fc_mu(x), -1)

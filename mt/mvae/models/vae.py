@@ -45,7 +45,8 @@ class ModelVAE(torch.nn.Module):
                  mask,
                  dataset: VaeDataset,
                  scalar_parametrization: bool,
-                 use_relu: bool) -> None:
+                 use_relu: bool,
+                 n_batch=None) -> None:
         """
         ModelVAE initializer
         :param h_dim: dimension of the hidden layers
@@ -54,6 +55,10 @@ class ModelVAE(torch.nn.Module):
         super().__init__()
         self.device = torch.device("cpu")
         self.components = nn.ModuleList(components)
+
+        if type(n_batch) != list:
+            n_batch = [n_batch]
+        self.n_batch = n_batch
 
         self.use_relu = use_relu
         if self.use_relu:
@@ -89,16 +94,20 @@ class ModelVAE(torch.nn.Module):
         raise NotImplementedError
 
     # it's the forward function that defines the network structure
-    def forward(self, x: Tensor, y: Tensor) -> Outputs:
+    def forward(self, x: Tensor, batch: Tensor) -> Outputs:
         reparametrized = []
 
+        if len(self.n_batch) > 1:
+            self.batch = self.multi_one_hot(batch, self.n_batch)
+        else:
+            self.batch = nn.functional.one_hot(batch[:, 0], self.n_batch[0])
         for i, component in enumerate(self.components):
             x_mask = x * self.mask[i]
 
             # Normalization is important for PCA, does not so for NN?
             # if i < 1:
                 # x_mask = torch.nn.functional.normalize(x_mask, p=2, dim=-1)
-            x_encoded = self.encode(x_mask, y)
+            x_encoded = self.encode(x_mask, self.batch)
 
             q_z, p_z, _ = component(x_encoded)
             z, data = q_z.rsample_with_parts()
@@ -110,7 +119,7 @@ class ModelVAE(torch.nn.Module):
             reparametrized.append(Reparametrized(q_z, p_z, z, data))
 
         concat_z = torch.cat(tuple(x.z for x in reparametrized), dim=-1)
-        mu1, sigma_square1 = self.decode(concat_z * self.mask_z, y)
+        mu1, sigma_square1 = self.decode(concat_z * self.mask_z, self.batch)
         mu1 = mu1[:, :self.num_gene[0]]
         sigma_square1 = sigma_square1[:self.num_gene[0]]
 
@@ -118,7 +127,7 @@ class ModelVAE(torch.nn.Module):
         # new_reparametrized = [self.compute_r2(x)] + reparametrized[1:]        
         # new_concat_z = torch.cat(tuple(x.z for x in new_reparametrized), dim=-1)
 
-        mu, sigma_square = self.decode(concat_z, y)
+        mu, sigma_square = self.decode(concat_z, self.batch)
         # mu, sigma_square = self.decode(new_concat_z)
         mu = torch.cat((mu1, mu[:, self.num_gene[0]:]), dim=-1)
         sigma_square = torch.cat(
@@ -265,4 +274,12 @@ class ModelVAE(torch.nn.Module):
              sigma * log_mu_sigma + x * torch.log(mu + eps) - x * log_mu_sigma
 
         return torch.sum(ll, dim=-1)
+
+    def multi_one_hot(self, indices, depth_list):
+        one_hot_tensor = nn.functional.one_hot(indices[:,0], depth_list[0])
+        for col in range(1, len(depth_list)):
+            next_one_hot = nn.functional.one_hot(indices[:,col], depth_list[col])
+            one_hot_tensor = torch.concat((one_hot_tensor, next_one_hot), dim=1)
+        
+        return one_hot_tensor
 
