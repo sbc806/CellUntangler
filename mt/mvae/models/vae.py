@@ -89,7 +89,7 @@ class ModelVAE(torch.nn.Module):
         raise NotImplementedError
 
     # it's the forward function that defines the network structure
-    def forward(self, x: Tensor) -> Outputs:
+    def forward(self, x: Tensor, y: Tensor) -> Outputs:
         reparametrized = []
 
         for i, component in enumerate(self.components):
@@ -98,7 +98,7 @@ class ModelVAE(torch.nn.Module):
             # Normalization is important for PCA, does not so for NN?
             # if i < 1:
                 # x_mask = torch.nn.functional.normalize(x_mask, p=2, dim=-1)
-            x_encoded = self.encode(x_mask)
+            x_encoded = self.encode(x_mask, y)
 
             q_z, p_z, _ = component(x_encoded)
             z, data = q_z.rsample_with_parts()
@@ -110,7 +110,7 @@ class ModelVAE(torch.nn.Module):
             reparametrized.append(Reparametrized(q_z, p_z, z, data))
 
         concat_z = torch.cat(tuple(x.z for x in reparametrized), dim=-1)
-        mu1, sigma_square1 = self.decode(concat_z * self.mask_z)
+        mu1, sigma_square1 = self.decode(concat_z * self.mask_z, y)
         mu1 = mu1[:, :self.num_gene[0]]
         sigma_square1 = sigma_square1[:self.num_gene[0]]
 
@@ -118,7 +118,7 @@ class ModelVAE(torch.nn.Module):
         # new_reparametrized = [self.compute_r2(x)] + reparametrized[1:]        
         # new_concat_z = torch.cat(tuple(x.z for x in new_reparametrized), dim=-1)
 
-        mu, sigma_square = self.decode(concat_z)
+        mu, sigma_square = self.decode(concat_z, y)
         # mu, sigma_square = self.decode(new_concat_z)
         mu = torch.cat((mu1, mu[:, self.num_gene[0]:]), dim=-1)
         sigma_square = torch.cat(
@@ -229,14 +229,15 @@ class ModelVAE(torch.nn.Module):
 
         return BatchStats(bce, component_kl, beta, log_likelihood, mi, cov_norm)
 
-    def train_step(self, optimizer: torch.optim.Optimizer, x_mb: Tensor,
+    def train_step(self, optimizer: torch.optim.Optimizer, x_mb: Tensor, y_mb: Tensor,
                    beta: float) -> Tuple[BatchStatsFloat, Outputs]:
         optimizer.zero_grad()
 
         library_size = torch.sum(x_mb, dim=1)
 
         x_mb = x_mb.to(self.device)
-        reparametrized, concat_z, x_mb_, sigma_square_ = self(torch.log1p(x_mb))
+        y_mb = y_mb.to(self.device)
+        reparametrized, concat_z, x_mb_, sigma_square_ = self(torch.log1p(x_mb), y_mb)
 
         x_mb_ = x_mb_ * library_size[:, None]
 
