@@ -101,9 +101,9 @@ class ModelVAE(torch.nn.Module):
             self.batch = self.multi_one_hot(batch, self.n_batch)
         else:
             self.batch = nn.functional.one_hot(batch[:, 0], self.n_batch[0])
-        print(batch)
-        print(self.batch.shape)
-        print(self.batch)
+        # print(batch)
+        # print(self.batch.shape)
+        # print(self.batch)
         for i, component in enumerate(self.components):
             x_mask = x * self.mask[i]
 
