@@ -168,6 +168,7 @@ class ModelVAE(torch.nn.Module):
             self.batch = self.multi_one_hot(batch, self.n_batch)
         else:
             self.batch = nn.functional.one_hot(batch[:, 0], self.n_batch[0])
+        print('self.batch:',self.batch)
         for i, component in enumerate(self.components):
             x_mask = x1 * self.mask[i]
             # if i < 1:
@@ -191,7 +192,7 @@ class ModelVAE(torch.nn.Module):
         concat_z = torch.cat(zs, dim=-1)
         mu_, sigma_squrare_ = self.decode(concat_z, self.batch)
         mu_ = mu_ * library_size[:, None]
-
+        print('x.shape:',x.shape)
         x_orig = x.repeat((n, 1, 1))
 
         # log_p_x_z = -self.reconstruction_loss(mu_, x_orig).sum(dim=-1)
