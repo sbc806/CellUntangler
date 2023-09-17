@@ -53,6 +53,7 @@ class NBVAE(ModelVAE):
         self.batch_invariant = batch_invariant
 
         total_num_of_batches = sum(n_batch)
+        self.total_num_of_batches = total_num_of_batches
         print(f"{self.n_batch} in nb_vae.py")
         print(f"batch_invariant: {self.batch_invariant}")
         print(f"total_num_of_batches: {total_num_of_batches}")
@@ -61,7 +62,8 @@ class NBVAE(ModelVAE):
         
         input_dim = dataset.in_dim
         if not self.batch_invariant:
-            input_dim = dataset.in_dim + total_num_of_batches
+            self.in_dim = self.in_dim + total_num_of_batches
+        print('self.in_dim:', self.in_dim)
         print("input_dim:", input_dim)
         encoder_szs = [input_dim] + [128, 64, h_dim]
         encoder_layers = []
@@ -85,7 +87,7 @@ class NBVAE(ModelVAE):
         output_dim = dataset.in_dim
         if not self.batch_invariant:
             output_dim = output_dim + total_num_of_batches
-        print(output_dim)
+        print('output_dim:', output_dim)
         self.fc_mu = nn.Linear(128, output_dim)
         self.fc_sigma = nn.Linear(128, output_dim)
 
@@ -117,7 +119,10 @@ class NBVAE(ModelVAE):
         sigma_square = torch.mean(sigma_square, 0)
         sigma_square = torch.clamp(sigma_square, EPS, MAX_SIGMA_SQUARE)
 
-        mu = mu.view(-1, bs, self.in_dim)  # flatten
+        if self.batch_invariant:
+            mu = mu.view(-1, bs, self.in_dim)  # flatten
+        else:
+            mu = mu.view(-1, bs, self.in_dim+self.total_num_of_batches)
 
         return mu.squeeze(dim=0), sigma_square
 
