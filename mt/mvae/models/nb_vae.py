@@ -62,6 +62,7 @@ class NBVAE(ModelVAE):
         input_dim = dataset.in_dim
         if not self.batch_invariant:
             input_dim = dataset.in_dim + total_num_of_batches
+        print("input_dim:", input_dim)
         encoder_szs = [input_dim] + [128, 64, h_dim]
         encoder_layers = []
         for in_sz, out_sz in zip(encoder_szs[:-1], encoder_szs[1:]):
@@ -80,9 +81,13 @@ class NBVAE(ModelVAE):
             # nn.BatchNorm1d(out_sz, momentum=0.01, eps=0.001)
 
         self.decoder = nn.Sequential(*decoder_layers)
-
-        self.fc_mu = nn.Linear(128, dataset.in_dim)
-        self.fc_sigma = nn.Linear(128, dataset.in_dim)
+        
+        output_dim = dataset.in_dim
+        if not self.batch_invariant:
+            output_dim = output_dim + total_num_of_batches
+        print(output_dim)
+        self.fc_mu = nn.Linear(128, output_dim)
+        self.fc_sigma = nn.Linear(128, output_dim)
 
     def encode(self, x: Tensor, batch: Tensor) -> Tensor:
         x = x.squeeze()
