@@ -85,8 +85,8 @@ class NBVAE(ModelVAE):
         self.decoder = nn.Sequential(*decoder_layers)
         
         output_dim = dataset.in_dim
-        if not self.batch_invariant:
-            output_dim = output_dim + total_num_of_batches
+        # if not self.batch_invariant:
+            # output_dim = output_dim + total_num_of_batches
         print('output_dim:', output_dim)
         self.fc_mu = nn.Linear(128, output_dim)
         self.fc_sigma = nn.Linear(128, output_dim)
@@ -119,10 +119,10 @@ class NBVAE(ModelVAE):
         sigma_square = torch.mean(sigma_square, 0)
         sigma_square = torch.clamp(sigma_square, EPS, MAX_SIGMA_SQUARE)
 
-        if self.batch_invariant:
-            mu = mu.view(-1, bs, self.in_dim)  # flatten
-        else:
-            mu = mu.view(-1, bs, self.in_dim+self.total_num_of_batches)
+        # if self.batch_invariant:
+        mu = mu.view(-1, bs, self.in_dim)  # flatten
+        # else:
+            # mu = mu.view(-1, bs, self.in_dim+self.total_num_of_batches)
 
         return mu.squeeze(dim=0), sigma_square
 
