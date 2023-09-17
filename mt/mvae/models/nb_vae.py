@@ -62,7 +62,7 @@ class NBVAE(ModelVAE):
         
         input_dim = dataset.in_dim
         if not self.batch_invariant:
-            self.in_dim = self.in_dim + total_num_of_batches
+            input_dim = input_dim + total_num_of_batches
         print('self.in_dim:', self.in_dim)
         print("input_dim:", input_dim)
         encoder_szs = [input_dim] + [128, 64, h_dim]
