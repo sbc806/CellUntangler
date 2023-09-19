@@ -34,7 +34,7 @@ class NBVAE(ModelVAE):
                  dataset: VaeDataset,
                  scalar_parametrization: bool,
                  use_relu: bool,
-                 n_batch=None,
+                 n_batch=0,
                  batch_invariant=False) -> None:
         super().__init__(h_dim,
                          components,
@@ -100,7 +100,7 @@ class NBVAE(ModelVAE):
         assert dim == self.in_dim
         x = x.view(bs, self.in_dim)
 
-        if not self.batch_invariant:
+        if not self.batch_invariant and self.total_num_of_batches != 0:
             x = torch.concat((x, batch), dim=1)
         x = self.encoder(x)
 
@@ -110,7 +110,8 @@ class NBVAE(ModelVAE):
         assert len(concat_z.shape) >= 2
         bs = concat_z.size(-2)
 
-        concat_z = torch.concat((concat_z, batch), dim=1)
+        if self.total_num_of_batches != 0:
+            concat_z = torch.concat((concat_z, batch), dim=1)
         x = self.decoder(concat_z)
 
         mu = torch.nn.functional.softmax(self.fc_mu(x), -1)

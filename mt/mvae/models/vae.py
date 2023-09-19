@@ -46,7 +46,7 @@ class ModelVAE(torch.nn.Module):
                  dataset: VaeDataset,
                  scalar_parametrization: bool,
                  use_relu: bool,
-                 n_batch=None) -> None:
+                 n_batch=0) -> None:
         """
         ModelVAE initializer
         :param h_dim: dimension of the hidden layers
@@ -60,6 +60,8 @@ class ModelVAE(torch.nn.Module):
             n_batch = [n_batch]
         self.n_batch = n_batch
         print(f"{self.n_batch} in vae.py")
+        self.total_num_of_batches = sum(self.n_batch)
+
         self.use_relu = use_relu
         if self.use_relu:
           print("Using relu in forward() and log_likelihood.")
@@ -69,6 +71,7 @@ class ModelVAE(torch.nn.Module):
         print("Commented out the normalization step in forward() and log_likelihood().")
         self.mask = mask
         self.num_gene = torch.sum(self.mask > 0, 1)
+        print('self.num_gene:', self.num_gene)
 
         dim_all = [i.dim for i in self.components]
         dim_z = sum(dim_all)
@@ -97,10 +100,13 @@ class ModelVAE(torch.nn.Module):
     def forward(self, x: Tensor, batch: Tensor) -> Outputs:
         reparametrized = []
 
-        if len(self.n_batch) > 1:
-            self.batch = self.multi_one_hot(batch, self.n_batch)
+        if self.total_num_of_batches != 0:
+            if len(self.n_batch) > 1:
+                self.batch = self.multi_one_hot(batch, self.n_batch)
+            else:
+                self.batch = nn.functional.one_hot(batch[:, 0], self.n_batch[0])
         else:
-            self.batch = nn.functional.one_hot(batch[:, 0], self.n_batch[0])
+            self.batch = None
         # print(batch)
         # print(self.batch.shape)
         # print(self.batch)
@@ -153,6 +159,7 @@ class ModelVAE(torch.nn.Module):
         :param n: Number of MC samples
         :return: Monte Carlo estimate of log-likelihood.
         """
+        print('Computing log_likelihood!!!')
         sample_shape = torch.Size([n])
         batch_size = x.shape[0]
         prob_shape = torch.Size([n, batch_size])
