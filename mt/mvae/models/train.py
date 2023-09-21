@@ -236,8 +236,8 @@ class Trainer:
         histograms: Dict[str, List[torch.Tensor]] = defaultdict(list)
         for batch_idx, (x_mb, y_mb) in enumerate(test_data):
             x_mb = x_mb.to(self.model.device)
-            reparametrized, concat_z, x_mb_, sigma_square_ = self.model(x_mb)
-            stats = self.model.compute_batch_stats(x_mb, x_mb_, sigma_square_,
+            reparametrized, concat_z, x_mb_, sigma_square_ = self.model(x_mb, y_mb)
+            stats = self.model.compute_batch_stats(x_mb, x_mb_, y_mb, sigma_square_,
                                                    reparametrized, likelihood_n=likelihood_n, beta=beta)
             batch_stats.append(stats.convert_to_float())
 
