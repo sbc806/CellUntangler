@@ -171,11 +171,14 @@ class ModelVAE(torch.nn.Module):
         zs = []
 
         x1 = torch.log1p(x)
-        if len(self.n_batch) > 1:
-            self.batch = self.multi_one_hot(batch, self.n_batch)
+        if self.total_num_of_batches != 0:
+            if len(self.n_batch) > 1:
+                self.batch = self.multi_one_hot(batch, self.n_batch)
+            else:
+                self.batch = nn.functional.one_hot(batch[:, 0], self.n_batch[0])
         else:
-            self.batch = nn.functional.one_hot(batch[:, 0], self.n_batch[0])
-        print('self.batch:',self.batch)
+            self.batch = None
+        # print('self.batch:',self.batch)
         for i, component in enumerate(self.components):
             x_mask = x1 * self.mask[i]
             # if i < 1:
