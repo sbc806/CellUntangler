@@ -34,8 +34,8 @@ class NBVAE(ModelVAE):
                  dataset: VaeDataset,
                  scalar_parametrization: bool,
                  use_relu: bool,
-                 n_batch=0,
-                 batch_invariant=False) -> None:
+                 n_batch: int = 0,
+                 batch_invariant: bool = False) -> None:
         super().__init__(h_dim,
                          components,
                          mask,
@@ -52,17 +52,17 @@ class NBVAE(ModelVAE):
         self.n_batch = n_batch
         self.batch_invariant = batch_invariant
 
-        total_num_of_batches = sum(n_batch)
+        total_num_of_batches = sum(self.n_batch)
         self.total_num_of_batches = total_num_of_batches
         print(f"{self.n_batch} in nb_vae.py")
         print(f"batch_invariant: {self.batch_invariant}")
-        print(f"total_num_of_batches: {total_num_of_batches}")
+        print(f"total_num_of_batches: {self.total_num_of_batches}")
         # multi-layer
         # http://adamlineberry.ai/vae-series/vae-code-experiments
         
         input_dim = dataset.in_dim
         if not self.batch_invariant:
-            input_dim = input_dim + total_num_of_batches
+            input_dim = input_dim + self.total_num_of_batches
         print('self.in_dim:', self.in_dim)
         print("input_dim:", input_dim)
         encoder_szs = [input_dim] + [128, 64, h_dim]
@@ -77,7 +77,7 @@ class NBVAE(ModelVAE):
         self.encoder = nn.Sequential(*encoder_layers)
 
         # construct the decoder
-        hidden_sizes = [self.total_z_dim + total_num_of_batches] + [64, 128]
+        hidden_sizes = [self.total_z_dim + self.total_num_of_batches] + [64, 128]
         decoder_layers = []
         for in_sz, out_sz in zip(hidden_sizes[:-1], hidden_sizes[1:]):
             decoder_layers.append(nn.Linear(in_sz, out_sz))
