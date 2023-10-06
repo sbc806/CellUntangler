@@ -72,7 +72,7 @@ class NBVAE(ModelVAE):
             # encoder_layers.append(nn.BatchNorm1d(out_sz, momentum=0.99, eps=0.001))
             encoder_layers.append(nn.GELU())
             # nn.BatchNorm1d(out_sz, momentum=0.01, eps=0.001)
-            encoder_layers.append(nn.BatchNorm1d(out_sz, momentum=0.99, eps=0.001))
+            # encoder_layers.append(nn.BatchNorm1d(out_sz, momentum=0.99, eps=0.001))
 
         self.encoder = nn.Sequential(*encoder_layers)
 
@@ -84,7 +84,7 @@ class NBVAE(ModelVAE):
             # decoder_layers.append(nn.BatchNorm1d(out_sz, momentum=0.99, eps=0.001))
             decoder_layers.append(nn.GELU())
             # nn.BatchNorm1d(out_sz, momentum=0.01, eps=0.001)
-            decoder_layers.append(nn.BatchNorm1d(out_sz, momentum=0.99, eps=0.001))
+            # decoder_layers.append(nn.BatchNorm1d(out_sz, momentum=0.99, eps=0.001))
 
         self.decoder = nn.Sequential(*decoder_layers)
         

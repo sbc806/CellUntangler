@@ -200,13 +200,29 @@ class ModelVAE(torch.nn.Module):
             log_q_z_x += log_q_z_x_
 
         concat_z = torch.cat(zs, dim=-1)
-        mu_, sigma_squrare_ = self.decode(concat_z, self.batch)
-        mu_ = mu_ * library_size[:, None]
+        # mu_, sigma_square_ = self.decode(concat_z, self.batch)
+        # mu_ = mu_ * library_size[:, None]
+        # Copied from forward() below
+        mu1, sigma_square1 = self.decode(concat_z * self.mask_z, self.batch)
+        mu1 = mu1[:, :self.num_gene[0]]
+        sigma_square1 = sigma_square1[:self.num_gene[0]]
+
+        # print("Using new_reparametrized and new_concat_z")
+        # new_reparametrized = [self.compute_r2(x)] + reparametrized[1:]        
+        # new_concat_z = torch.cat(tuple(x.z for x in new_reparametrized), dim=-1)
+
+        mu, sigma_square = self.decode(concat_z, self.batch)
+        # mu, sigma_square = self.decode(new_concat_z)
+        mu = torch.cat((mu1, mu[:, self.num_gene[0]:]), dim=-1)
+        sigma_square = torch.cat(
+            (sigma_square1, sigma_square[self.num_gene[0]:]), dim=-1)
+        mu_ = mu * library_size[:, None]
+        sigma_square_ = sigma_square
         print('x.shape:',x.shape)
         x_orig = x.repeat((n, 1, 1))
 
         # log_p_x_z = -self.reconstruction_loss(mu_, x_orig).sum(dim=-1)
-        log_p_x_z = self.log_likelihood_nb(x_orig, mu_, sigma_squrare_)
+        log_p_x_z = self.log_likelihood_nb(x_orig, mu_, sigma_square_)
 
         assert log_p_x_z.shape == log_p_z.shape
         assert log_q_z_x.shape == log_p_z.shape
