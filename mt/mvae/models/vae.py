@@ -79,6 +79,11 @@ class ModelVAE(torch.nn.Module):
         mask_z = np.zeros(dim_z)
         mask_z[:dim_all[0]] = 1
         self.mask_z = torch.tensor(mask_z)
+        no_cycle_mask_z = np.zeros(dim_z)
+        no_cycle_mask_z[dim_all[0]:] = 1
+        self.no_cycle_mask_z = torch.tensor(no_cycle_mask_z)
+        print(np.sum(mask_z))
+        print(np.sum(no_cycle_mask_z))
 
         self.reconstruction_loss = dataset.reconstruction_loss  # dataset-dependent, not implemented
 
@@ -136,7 +141,7 @@ class ModelVAE(torch.nn.Module):
         # new_reparametrized = [self.compute_r2(x)] + reparametrized[1:]        
         # new_concat_z = torch.cat(tuple(x.z for x in new_reparametrized), dim=-1)
 
-        mu, sigma_square = self.decode(concat_z, self.batch)
+        mu, sigma_square = self.decode(concat_z * self.no_cycle_mask_z, self.batch)
         # mu, sigma_square = self.decode(new_concat_z)
         mu = torch.cat((mu1, mu[:, self.num_gene[0]:]), dim=-1)
         sigma_square = torch.cat(
