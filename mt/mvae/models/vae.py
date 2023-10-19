@@ -141,8 +141,7 @@ class ModelVAE(torch.nn.Module):
         mu = torch.cat((mu1, mu[:, self.num_gene[0]:]), dim=-1)
         sigma_square = torch.cat(
             (sigma_square1, sigma_square[self.num_gene[0]:]), dim=-1)
-        print(mu.shape)
-        print(sigma_square.shape)
+        
         return reparametrized, concat_z, mu, sigma_square
 
     @torch.no_grad()
