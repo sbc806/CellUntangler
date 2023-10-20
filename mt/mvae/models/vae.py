@@ -46,7 +46,8 @@ class ModelVAE(torch.nn.Module):
                  dataset: VaeDataset,
                  scalar_parametrization: bool,
                  use_relu: bool,
-                 n_batch: int = 0) -> None:
+                 n_batch: int = 0,
+                 use_hsic: bool = False) -> None:
         """
         ModelVAE initializer
         :param h_dim: dimension of the hidden layers
@@ -80,6 +81,8 @@ class ModelVAE(torch.nn.Module):
         mask_z[:dim_all[0]] = 1
         self.mask_z = torch.tensor(mask_z)
         
+        self.use_hsic = use_hsic
+        print(f"use_hsic: {self.use_hsic}")
         self.reconstruction_loss = dataset.reconstruction_loss  # dataset-dependent, not implemented
 
         self.total_z_dim = sum(component.dim for component in components)
@@ -271,7 +274,10 @@ class ModelVAE(torch.nn.Module):
         if likelihood_n:
             log_likelihood, mi, cov_norm = self.log_likelihood(x_mb, batch, n=likelihood_n)
 
-        return BatchStats(bce, component_kl, beta, log_likelihood, mi, cov_norm)
+        hsic = None
+        if self.use_hsic:
+            hsic = self.calculate_hsic(reparametrized[0].z, reparametrized[1].z)
+        return BatchStats(bce, component_kl, beta, log_likelihood, mi, cov_norm, hsic)
 
     def train_step(self, optimizer: torch.optim.Optimizer, x_mb: Tensor, y_mb: Tensor,
                    beta: float) -> Tuple[BatchStatsFloat, Outputs]:
@@ -317,4 +323,39 @@ class ModelVAE(torch.nn.Module):
             one_hot_tensor = torch.concat((one_hot_tensor, next_one_hot), dim=1)
         
         return one_hot_tensor
+
+    def calculate_hsic(self, z1, z2):
+        n = z1.shape[0]
+        u_kernels = torch.zeros((n, n), dtype=torch.float64)
+        v_kernels = torch.zeros((n, n), dtype=torch.float64)
+
+        for i in range(0, n):
+            for j in range(0, n):
+                u_kernels[i][j] = self.gaussian_kernel(z1[i], z1[j])
+                v_kernels[i][j] = self.gaussian_kernel(z2[i], z2[j])
+
+        first_term = torch.sum(u_kernels * v_kernels) / n**2
+
+        second_term = 0
+        for i in range(0, n):
+            for j in range(0, n):
+                second_term = second_term + torch.sum(u_kernels[i][j] * v_kernels)
+        second_term = second_term / n**4
+
+        third_term = 0
+        for i in range(0, n):
+            for j in range(0, n):
+                third_term = third_term + torch.sum(u_kernels[i][j] * v_kernels[i])
+        third_term = third_term * 2 / n**3
+        return first_term + second_term - third_term
+    
+    def gaussian_kernel(self, u, u_1, gamma=1.0):
+        """
+        A universal kernel when gamma > 1.0.
+        """
+        difference = u - u_1
+        squared_norm = torch.linalg.vector_norm(difference, ord=2)**2
+  
+        return torch.exp(-gamma * squared_norm)
+
 

@@ -108,7 +108,8 @@ def _to_print(stats: Union["BatchStatsFloat", "EpochStats"]) -> EpochStatsType:
         "ll": 0.0 if stats.log_likelihood is None else stats.log_likelihood,
         "mi": 0.0 if stats.mutual_info is None else stats.mutual_info,
         "cov_norm": 0.0 if stats.cov_norm is None else stats.cov_norm,
-        "beta": stats.beta
+        "beta": stats.beta,
+        "hsic": stats.hsic
     }
 
 
@@ -116,7 +117,8 @@ class BatchStatsFloat:
 
     def __init__(self, bce: Tensor, kl: Tensor, elbo: Tensor, log_likelihood: Optional[Tensor],
                  mutual_info: Optional[Tensor], cov_norm: Optional[Tensor], component_kl: List[Tensor],
-                 beta: float) -> None:
+                 beta: float,
+                 hsic: Optional[float]) -> None:
         self.bce = bce.item()
         self.kl = kl.item()
         self.elbo = elbo.item()
@@ -125,6 +127,7 @@ class BatchStatsFloat:
         self.cov_norm = None if cov_norm is None else cov_norm.item()
         self.component_kl = [x.item() for x in component_kl]
         self.beta = beta
+        self.hsic = hsic
 
     def summaries(self, stats: Stats, prefix: str = "train/batch") -> None:
         stats.add_scalar(prefix + "/bce", self.bce)
@@ -136,6 +139,8 @@ class BatchStatsFloat:
             stats.add_scalar(prefix + "/mutual_info", self.mutual_info)
         if self.cov_norm is not None:
             stats.add_scalar(prefix + "/cov_norm", self.cov_norm)
+        if self.hsic is not None:
+          stats.add_scalar(prefix + "/hsic", self.hsic)
 
     def to_print(self) -> EpochStatsType:
         return _to_print(self)
@@ -149,7 +154,8 @@ class BatchStats:
                  beta: float,
                  log_likelihood: Optional[Tensor] = None,
                  mutual_info: Optional[Tensor] = None,
-                 cov_norm: Optional[Tensor] = None) -> None:
+                 cov_norm: Optional[Tensor] = None,
+                 hsic: Optional[float] = None) -> None:
         self._beta = beta
 
         self._bce = bce
@@ -161,6 +167,8 @@ class BatchStats:
 
         self._kl_val = self._kl()
         self._elbo_val = self._elbo(beta)
+
+        self._hsic = hsic
 
     @property
     def bce(self) -> Tensor:
@@ -188,11 +196,18 @@ class BatchStats:
 
     @property
     def elbo(self) -> Tensor:
-        return self._elbo_val.sum(dim=-1)
+        if self._hsic is None:
+            return self._elbo_val.sum(dim=-1)
+        else:
+            return self._elbo_val.sum(dim=-1) - self._hsic
 
     @property
     def beta(self) -> float:
         return self._beta
+
+    @property
+    def hsic(self) -> float:
+        return self._hsic
 
     def _kl(self) -> Tensor:
         return torch.sum(torch.cat([x.unsqueeze(dim=-1) for x in self._component_kl], dim=-1), dim=-1)
@@ -209,7 +224,8 @@ class BatchStats:
                                self.mutual_info,
                                self.cov_norm,
                                self.component_kl,
-                               beta=self.beta)
+                               beta=self.beta,
+                               hsic=self.hsic)
 
 
 class EpochStats:
