@@ -244,6 +244,8 @@ class EpochStats:
         self.beta = bs[0].beta
         assert sum(self.beta == b.beta for b in bs) == len(bs)  # Assert all betas in epoch are the same.
 
+        self.hsic = 0
+
         for batch in bs:
             self.bce += batch.bce
             self.kl += batch.kl
@@ -256,6 +258,8 @@ class EpochStats:
                 self.cov_norm += batch.cov_norm
             for i in range(len(self.component_kl)):
                 self.component_kl[i] += batch.component_kl[i]
+            if self.hsic:
+                self.hsic += batch.hsic
 
         self.bce /= length
         self.kl /= length
@@ -265,6 +269,7 @@ class EpochStats:
         self.cov_norm /= length
         for i in range(len(self.component_kl)):
             self.component_kl[i] /= length
+        self.hsic /= length
 
     def to_print(self) -> EpochStatsType:
         return _to_print(self)
@@ -282,3 +287,5 @@ class EpochStats:
             stats.add_scalar(prefix + "/mutual_info", self.mutual_info, epoch=True)
         if self.cov_norm:
             stats.add_scalar(prefix + "/cov_norm", self.cov_norm, epoch=True)
+        if self.hsic:
+            stats.add_scalar(prefix + "/hsic", self.hsic, epoch=True)
