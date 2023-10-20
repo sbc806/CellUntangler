@@ -108,8 +108,7 @@ def _to_print(stats: Union["BatchStatsFloat", "EpochStats"]) -> EpochStatsType:
         "ll": 0.0 if stats.log_likelihood is None else stats.log_likelihood,
         "mi": 0.0 if stats.mutual_info is None else stats.mutual_info,
         "cov_norm": 0.0 if stats.cov_norm is None else stats.cov_norm,
-        "beta": stats.beta,
-        "hsic": stats.hsic
+        "beta": stats.beta
     }
 
 
