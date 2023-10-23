@@ -127,7 +127,7 @@ class BatchStatsFloat:
         self.cov_norm = None if cov_norm is None else cov_norm.item()
         self.component_kl = [x.item() for x in component_kl]
         self.beta = beta
-        self.hsic = hsic.item()
+        self.hsic = None if hsic is None else hsic.item()
         
     def summaries(self, stats: Stats, prefix: str = "train/batch") -> None:
         stats.add_scalar(prefix + "/bce", self.bce)
