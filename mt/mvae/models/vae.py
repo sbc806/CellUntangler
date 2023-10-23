@@ -277,6 +277,7 @@ class ModelVAE(torch.nn.Module):
         hsic = None
         if self.use_hsic:
             hsic = self.calculate_hsic(reparametrized[0].z, reparametrized[1].z)
+            print(f"hsic: {hsic}")
         return BatchStats(bce, component_kl, beta, log_likelihood, mi, cov_norm, hsic)
 
     def train_step(self, optimizer: torch.optim.Optimizer, x_mb: Tensor, y_mb: Tensor,
@@ -329,10 +330,13 @@ class ModelVAE(torch.nn.Module):
         u_kernels = torch.zeros((n, n), dtype=torch.float64)
         v_kernels = torch.zeros((n, n), dtype=torch.float64)
 
+        z1_gamma = torch.sqrt(calculate_median_gamma(z1)/2)
+        z2_gamma = torch.sqrt(calculate_median_gamma(z2)/2)
+
         for i in range(0, n):
             for j in range(0, n):
-                u_kernels[i][j] = self.gaussian_kernel(z1[i], z1[j])
-                v_kernels[i][j] = self.gaussian_kernel(z2[i], z2[j])
+                u_kernels[i][j] = self.gaussian_kernel(z1[i], z1[j], z1_gamma)
+                v_kernels[i][j] = self.gaussian_kernel(z2[i], z2[j], z2_gamma)
 
         first_term = torch.sum(u_kernels * v_kernels) / n**2
 
@@ -359,3 +363,12 @@ class ModelVAE(torch.nn.Module):
         return torch.exp(-gamma * squared_norm)
 
 
+def calculate_median_gamma(x):
+    n = x.shape[0]
+    medians = torch.zeros((n-1)*(n-1+1)/2, dtype=torch.float64)
+    count = 0
+    for i in range(0, n-1):
+        for j in range(i+1, n):
+            medians[count] = torch.linalg.norm(x[i] - x[j], ord=2)**2
+            count = count + 1
+    return torch.median(medians)
