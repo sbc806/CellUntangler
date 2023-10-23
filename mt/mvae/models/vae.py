@@ -365,7 +365,7 @@ class ModelVAE(torch.nn.Module):
 
 def calculate_median_gamma(x):
     n = x.shape[0]
-    medians = torch.zeros((n-1)*(n-1+1)/2, dtype=torch.float64)
+    medians = torch.zeros(int((n-1)*(n-1+1)/2), dtype=torch.float64)
     count = 0
     for i in range(0, n-1):
         for j in range(i+1, n):
