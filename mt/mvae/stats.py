@@ -128,7 +128,7 @@ class BatchStatsFloat:
         self.component_kl = [x.item() for x in component_kl]
         self.beta = beta
         self.hsic = hsic
-
+        print('batch_stats_float',self.hsic)
     def summaries(self, stats: Stats, prefix: str = "train/batch") -> None:
         stats.add_scalar(prefix + "/bce", self.bce)
         stats.add_scalar(prefix + "/kl", self.kl)
@@ -167,7 +167,7 @@ class BatchStats:
 
         self._kl_val = self._kl()
         self._elbo_val = self._elbo(beta)
-
+        print(hsic)
         self._hsic = hsic
 
     @property
@@ -199,6 +199,7 @@ class BatchStats:
         if self._hsic is None:
             return self._elbo_val.sum(dim=-1)
         else:
+            print('Substracting hsic')
             return self._elbo_val.sum(dim=-1) - self._hsic
 
     @property
