@@ -127,8 +127,8 @@ class BatchStatsFloat:
         self.cov_norm = None if cov_norm is None else cov_norm.item()
         self.component_kl = [x.item() for x in component_kl]
         self.beta = beta
-        self.hsic = hsic
-        print('batch_stats_float',self.hsic)
+        self.hsic = hsic.item()
+        
     def summaries(self, stats: Stats, prefix: str = "train/batch") -> None:
         stats.add_scalar(prefix + "/bce", self.bce)
         stats.add_scalar(prefix + "/kl", self.kl)
@@ -167,7 +167,6 @@ class BatchStats:
 
         self._kl_val = self._kl()
         self._elbo_val = self._elbo(beta)
-        print(hsic)
         self._hsic = hsic
 
     @property
@@ -199,7 +198,6 @@ class BatchStats:
         if self._hsic is None:
             return self._elbo_val.sum(dim=-1)
         else:
-            print('Substracting hsic')
             return self._elbo_val.sum(dim=-1) - self._hsic
 
     @property
@@ -259,9 +257,9 @@ class EpochStats:
                 self.cov_norm += batch.cov_norm
             for i in range(len(self.component_kl)):
                 self.component_kl[i] += batch.component_kl[i]
-            if self.hsic:
+            if batch.hsic:
                 self.hsic += batch.hsic
-        print(self.hsic)
+        
         self.bce /= length
         self.kl /= length
         self.elbo /= length
