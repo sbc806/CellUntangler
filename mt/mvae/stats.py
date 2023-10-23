@@ -259,7 +259,7 @@ class EpochStats:
                 self.component_kl[i] += batch.component_kl[i]
             if batch.hsic:
                 self.hsic += batch.hsic
-        
+        print(self.hsic, length)
         self.bce /= length
         self.kl /= length
         self.elbo /= length
