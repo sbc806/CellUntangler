@@ -144,7 +144,7 @@ class ModelVAE(torch.nn.Module):
         mu = torch.cat((mu1, mu[:, self.num_gene[0]:]), dim=-1)
         sigma_square = torch.cat(
             (sigma_square1, sigma_square[self.num_gene[0]:]), dim=-1)
-        
+        print(sigma_square.shape)
         return reparametrized, concat_z, mu, sigma_square
 
     @torch.no_grad()
@@ -264,7 +264,7 @@ class ModelVAE(torch.nn.Module):
         weight = [1.0, 1.0]
         for i, (component, r) in enumerate(zip(self.components, reparametrized)):
             kl_comp = component.kl_loss(r.q_z, r.p_z, r.z, r.data) * weight[i]
-
+            print(kl_comp.shape)
             assert torch.isfinite(kl_comp).all()
             component_kl.append(kl_comp)
 
