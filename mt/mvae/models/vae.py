@@ -121,9 +121,10 @@ class ModelVAE(torch.nn.Module):
                 # x_mask = torch.nn.functional.normalize(x_mask, p=2, dim=-1)
             x_encoded = self.encode(x_mask, self.batch)
 
-            q_z, p_z, _ = component(x_encoded)
+            q_z, p_z, z_mean_h, std = component(x_encoded)
             z, data = q_z.rsample_with_parts()
-
+            print(f"z_mean_h.shape: {z_mean_h.shape}")
+            print(f"std.shape: {std.shape}")
             if self.use_relu:
                 if 0 == i:
                     z = torch.cat((torch.relu(z[..., 0:1]), z[..., 1:]), dim=1)
@@ -144,7 +145,8 @@ class ModelVAE(torch.nn.Module):
         mu = torch.cat((mu1, mu[:, self.num_gene[0]:]), dim=-1)
         sigma_square = torch.cat(
             (sigma_square1, sigma_square[self.num_gene[0]:]), dim=-1)
-        print(sigma_square.shape)
+        print(f"mu.shape: {mu.shape}")
+        print(f"sigma_square.shape: {sigma_square.shape}")
         return reparametrized, concat_z, mu, sigma_square
 
     @torch.no_grad()
