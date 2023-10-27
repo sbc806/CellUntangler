@@ -123,8 +123,8 @@ class ModelVAE(torch.nn.Module):
 
             q_z, p_z, z_params = component(x_encoded)
             z, data = q_z.rsample_with_parts()
-            print(f"z_mean_h.shape: {z_params[0].shape}")
-            print(f"std.shape: {z_params[1].shape}")
+            # print(f"z_mean_h.shape: {z_params[0].shape}")
+            # print(f"std.shape: {z_params[1].shape}")
             if self.use_relu:
                 if 0 == i:
                     z = torch.cat((torch.relu(z[..., 0:1]), z[..., 1:]), dim=1)
@@ -145,8 +145,8 @@ class ModelVAE(torch.nn.Module):
         mu = torch.cat((mu1, mu[:, self.num_gene[0]:]), dim=-1)
         sigma_square = torch.cat(
             (sigma_square1, sigma_square[self.num_gene[0]:]), dim=-1)
-        print(f"mu.shape: {mu.shape}")
-        print(f"sigma_square.shape: {sigma_square.shape}")
+        # print(f"mu.shape: {mu.shape}")
+        # print(f"sigma_square.shape: {sigma_square.shape}")
         return reparametrized, concat_z, mu, sigma_square
 
     @torch.no_grad()
@@ -263,10 +263,10 @@ class ModelVAE(torch.nn.Module):
         # assert (bce >= 0).all()
 
         component_kl = []
-        weight = [1.0, 1.0]
+        weight = [2.0, 2.0]
         for i, (component, r) in enumerate(zip(self.components, reparametrized)):
             kl_comp = component.kl_loss(r.q_z, r.p_z, r.z, r.data) * weight[i]
-            print(kl_comp.shape)
+            # print(kl_comp.shape)
             assert torch.isfinite(kl_comp).all()
             component_kl.append(kl_comp)
 
