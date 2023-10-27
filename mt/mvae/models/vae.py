@@ -121,10 +121,10 @@ class ModelVAE(torch.nn.Module):
                 # x_mask = torch.nn.functional.normalize(x_mask, p=2, dim=-1)
             x_encoded = self.encode(x_mask, self.batch)
 
-            q_z, p_z, z_mean_h, std = component(x_encoded)
+            q_z, p_z, z_params = component(x_encoded)
             z, data = q_z.rsample_with_parts()
-            print(f"z_mean_h.shape: {z_mean_h.shape}")
-            print(f"std.shape: {std.shape}")
+            print(f"z_mean_h.shape: {z_params[0].shape}")
+            print(f"std.shape: {z_params[1].shape}")
             if self.use_relu:
                 if 0 == i:
                     z = torch.cat((torch.relu(z[..., 0:1]), z[..., 1:]), dim=1)
