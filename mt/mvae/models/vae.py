@@ -321,8 +321,12 @@ class ModelVAE(torch.nn.Module):
 
     def multi_one_hot(self, indices, depth_list):
         one_hot_tensor = nn.functional.one_hot(indices[:,0], depth_list[0])
+        if depth_list[0] == 1:
+            one_hot_tensor = one_hot_tensor - 1
         for col in range(1, len(depth_list)):
             next_one_hot = nn.functional.one_hot(indices[:,col], depth_list[col])
+            if col == 1:
+                next_one_hot = next_one_hot - 1
             one_hot_tensor = torch.concat((one_hot_tensor, next_one_hot), dim=1)
         
         return one_hot_tensor
