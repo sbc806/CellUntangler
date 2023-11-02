@@ -399,7 +399,8 @@ def bandwidth(d):
     
 def K(x1, x2, gamma=1.): 
     dist_table = torch.unsqueeze(x1, 0) - torch.unsqueeze(x2, 1)
-    return torch.transpose(torch.exp(-gamma * torch.sum(dist_table **2, dim=2)))
+    print(torch.exp(-gamma * torch.sum(dist_table **2, dim=2)).shape)
+    return torch.exp(-gamma * torch.sum(dist_table **2, dim=2)).T
 
 def hsic(z, s):
     
