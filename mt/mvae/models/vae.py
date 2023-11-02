@@ -25,6 +25,15 @@ from ...data import VaeDataset
 from ..stats import BatchStats, BatchStatsFloat
 from ..components import Component
 
+# Tensorflow implementation of HSIC
+# Refers to original implementations
+# https://github.com/kacperChwialkowski/HSIC
+# https://cran.r-project.org/web/packages/dHSIC/index.html
+
+
+from scipy.special import gamma
+import numpy as np
+
 
 #TODO: add mask
 class Reparametrized:
@@ -276,11 +285,12 @@ class ModelVAE(torch.nn.Module):
         if likelihood_n:
             log_likelihood, mi, cov_norm = self.log_likelihood(x_mb, batch, n=likelihood_n)
 
-        hsic = None
+        batch_hsic = None
         if self.use_hsic:
-            hsic = self.calculate_hsic(reparametrized[0].z, reparametrized[1].z) * 1000
-        # print(f"hsic: {hsic}")
-        return BatchStats(bce, component_kl, beta, log_likelihood, mi, cov_norm, hsic)
+            # hsic = self.calculate_hsic(reparametrized[0].z, reparametrized[1].z) * 1000
+            batch_hsic = hsic(reparametrized[0].z, reparametrized[1].z)
+        print(f"batch_hsic: {batch_hsic}")
+        return BatchStats(bce, component_kl, beta, log_likelihood, mi, cov_norm, batch_hsic)
 
     def train_step(self, optimizer: torch.optim.Optimizer, x_mb: Tensor, y_mb: Tensor,
                    beta: float) -> Tuple[BatchStatsFloat, Outputs]:
@@ -378,3 +388,32 @@ def calculate_median_gamma(x):
             medians[count] = torch.linalg.norm(x[i] - x[j], ord=2)**2
             count = count + 1
     return torch.median(medians)
+
+def bandwidth(d):
+    """
+    in the case of Gaussian random variables and the use of a RBF kernel, 
+    this can be used to select the bandwidth according to the median heuristic
+    """
+    gz = 2 * gamma(0.5 * (d+1)) / gamma(0.5 * d)
+    return 1. / (2. * gz**2)
+    
+def K(x1, x2, gamma=1.): 
+    dist_table = torch.unsqueeze(x1, 0) - torch.unsqueeze(x2, 1)
+    return torch.transpose(torch.exp(-gamma * torch.sum(dist_table **2, dim=2)))
+
+def hsic(z, s):
+    
+    # use a gaussian RBF for every variable
+      
+    d_z = z.get_shape().as_list()[1]
+    d_s = s.get_shape().as_list()[1]
+    
+    zz = K(z, z, gamma= bandwidth(d_z))
+    ss = K(s, s, gamma= bandwidth(d_s))
+        
+        
+    hsic = 0
+    hsic += torch.mean(zz * ss) 
+    hsic += torch.mean(zz) * torch.mean(ss)
+    hsic -= 2 * torch.mean( torch.mean(zz, dim=1) * torch.mean(ss, dim=1) )
+    return torch.sqrt(hsic)
