@@ -405,8 +405,8 @@ def hsic(z, s):
     
     # use a gaussian RBF for every variable
       
-    d_z = z.get_shape().as_list()[1]
-    d_s = s.get_shape().as_list()[1]
+    d_z = list(z.shape)[1]
+    d_s = list(s.shape)[1]
     
     zz = K(z, z, gamma= bandwidth(d_z))
     ss = K(s, s, gamma= bandwidth(d_s))
