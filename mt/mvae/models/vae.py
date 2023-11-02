@@ -288,7 +288,7 @@ class ModelVAE(torch.nn.Module):
         batch_hsic = None
         if self.use_hsic:
             # hsic = self.calculate_hsic(reparametrized[0].z, reparametrized[1].z) * 1000
-            batch_hsic = hsic(reparametrized[0].z, reparametrized[1].z)
+            batch_hsic = hsic(reparametrized[0].z, reparametrized[1].z) * 100
         print(f"batch_hsic: {batch_hsic}")
         return BatchStats(bce, component_kl, beta, log_likelihood, mi, cov_norm, batch_hsic)
 
