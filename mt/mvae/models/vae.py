@@ -292,7 +292,7 @@ class ModelVAE(torch.nn.Module):
         batch_hsic = None
         if self.use_hsic:
             # hsic = self.calculate_hsic(reparametrized[0].z, reparametrized[1].z) * 1000
-            z1_poincare = lorentz_to_poincare(reparametrized[0].z, self.components[0].curvature)
+            z1_poincare = lorentz_to_poincare(reparametrized[0].z, self.components[0].manifold.curvature)
             batch_hsic = hsic(z1_poincare, reparametrized[1].z) * self.hsic_weight
         # print(f"batch_hsic: {batch_hsic}")
         return BatchStats(bce, component_kl, beta, log_likelihood, mi, cov_norm, batch_hsic)
