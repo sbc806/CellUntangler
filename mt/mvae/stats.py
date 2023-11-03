@@ -268,7 +268,7 @@ class EpochStats:
         self.cov_norm /= length
         for i in range(len(self.component_kl)):
             self.component_kl[i] /= length
-        self.hsic /= length
+        # self.hsic /= length
 
     def to_print(self) -> EpochStatsType:
         return _to_print(self)

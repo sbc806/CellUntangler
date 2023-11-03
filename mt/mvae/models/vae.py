@@ -33,6 +33,7 @@ from ..components import Component
 
 from scipy.special import gamma
 import numpy as np
+import math as math
 
 
 #TODO: add mask
@@ -291,7 +292,8 @@ class ModelVAE(torch.nn.Module):
         batch_hsic = None
         if self.use_hsic:
             # hsic = self.calculate_hsic(reparametrized[0].z, reparametrized[1].z) * 1000
-            batch_hsic = hsic(reparametrized[0].z, reparametrized[1].z) * self.hsic_weight
+            z1_poincare = lorentz_to_poincare(reparametrized[0].z, self.components[0].curvature)
+            batch_hsic = hsic(z1_poincare, reparametrized[1].z) * self.hsic_weight
         # print(f"batch_hsic: {batch_hsic}")
         return BatchStats(bce, component_kl, beta, log_likelihood, mi, cov_norm, batch_hsic)
 
@@ -402,7 +404,6 @@ def bandwidth(d):
     
 def K(x1, x2, gamma=1.): 
     dist_table = torch.unsqueeze(x1, 0) - torch.unsqueeze(x2, 1)
-    print(torch.exp(-gamma * torch.sum(dist_table **2, dim=2)).shape)
     return torch.exp(-gamma * torch.sum(dist_table **2, dim=2)).T
 
 def hsic(z, s):
@@ -421,3 +422,6 @@ def hsic(z, s):
     hsic += torch.mean(zz) * torch.mean(ss)
     hsic -= 2 * torch.mean( torch.mean(zz, dim=1) * torch.mean(ss, dim=1) )
     return hsic
+
+def lorentz_to_poincare(embeddings, curvature):
+    return embeddings[:, 1:] / (1 + math.sqrt(abs(curvature)) * embeddings[:, 0:1])
