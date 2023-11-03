@@ -56,7 +56,8 @@ class ModelVAE(torch.nn.Module):
                  scalar_parametrization: bool,
                  use_relu: bool,
                  n_batch: int = 0,
-                 use_hsic: bool = False) -> None:
+                 use_hsic: bool = False,
+                 hsic_weight: int = 1000) -> None:
         """
         ModelVAE initializer
         :param h_dim: dimension of the hidden layers
@@ -92,6 +93,8 @@ class ModelVAE(torch.nn.Module):
         
         self.use_hsic = use_hsic
         print(f"use_hsic: {self.use_hsic}")
+        self.hsic_weight = hsic_weight
+        print(f"hsic_weight: {self.hsic_weight}")
         self.reconstruction_loss = dataset.reconstruction_loss  # dataset-dependent, not implemented
 
         self.total_z_dim = sum(component.dim for component in components)
@@ -288,7 +291,7 @@ class ModelVAE(torch.nn.Module):
         batch_hsic = None
         if self.use_hsic:
             # hsic = self.calculate_hsic(reparametrized[0].z, reparametrized[1].z) * 1000
-            batch_hsic = hsic(reparametrized[0].z, reparametrized[1].z) * 1000
+            batch_hsic = hsic(reparametrized[0].z, reparametrized[1].z) * self.hsic_weight
         # print(f"batch_hsic: {batch_hsic}")
         return BatchStats(bce, component_kl, beta, log_likelihood, mi, cov_norm, batch_hsic)
 
@@ -417,4 +420,4 @@ def hsic(z, s):
     hsic += torch.mean(zz * ss) 
     hsic += torch.mean(zz) * torch.mean(ss)
     hsic -= 2 * torch.mean( torch.mean(zz, dim=1) * torch.mean(ss, dim=1) )
-    return torch.sqrt(hsic)
+    return hsic
