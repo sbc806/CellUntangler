@@ -36,7 +36,8 @@ class NBVAE(ModelVAE):
                  use_relu: bool,
                  n_batch: int = 0,
                  batch_invariant: bool = False,
-                 use_hsic: bool = False) -> None:
+                 use_hsic: bool = False,
+                 hsic_weight: int = 1000) -> None:
         super().__init__(h_dim,
                          components,
                          mask,
@@ -44,7 +45,8 @@ class NBVAE(ModelVAE):
                          scalar_parametrization,
                          use_relu,
                          n_batch,
-                         use_hsic)
+                         use_hsic,
+                         hsic_weight)
 
         self.in_dim = dataset.in_dim
         self.h_dim = h_dim
