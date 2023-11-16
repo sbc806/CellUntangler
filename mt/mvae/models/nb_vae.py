@@ -23,6 +23,8 @@ from .vae import ModelVAE
 from ...data import VaeDataset
 from ..components import Component
 
+from ml_collections import ConfigDict
+
 EPS = 1e-6
 MAX_SIGMA_SQUARE = 1e10
 
@@ -32,29 +34,21 @@ class NBVAE(ModelVAE):
     def __init__(self, h_dim: int, components: List[Component],
                  mask,
                  dataset: VaeDataset,
-                 scalar_parametrization: bool,
-                 use_relu: bool,
-                 n_batch: int = 0,
-                 batch_invariant: bool = False,
-                 use_hsic: bool = False,
-                 hsic_weight: int = 1000) -> None:
+                 config: ConfigDict) -> None:
         super().__init__(h_dim,
                          components,
                          mask,
                          dataset,
-                         scalar_parametrization,
-                         use_relu,
-                         n_batch,
-                         use_hsic,
-                         hsic_weight)
+                         config)
 
         self.in_dim = dataset.in_dim
         self.h_dim = h_dim
 
+        n_batch = config.n_batch
         if type(n_batch) != list:
             n_batch = [n_batch]
         self.n_batch = n_batch
-        self.batch_invariant = batch_invariant
+        self.batch_invariant = config.batch_invariant
 
         total_num_of_batches = sum(self.n_batch)
         self.total_num_of_batches = total_num_of_batches
@@ -98,6 +92,9 @@ class NBVAE(ModelVAE):
         print('output_dim:', output_dim)
         self.fc_mu = nn.Linear(128, output_dim)
         self.fc_sigma = nn.Linear(128, output_dim)
+
+        if config.init == "xavier_1":
+            self.apply(self._init_weights_xavier_1)
 
     def encode(self, x: Tensor, batch: Tensor) -> Tensor:
         x = x.squeeze()

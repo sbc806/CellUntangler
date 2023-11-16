@@ -31,6 +31,7 @@ from ..components import Component
 # https://cran.r-project.org/web/packages/dHSIC/index.html
 
 
+from ml_collections import ConfigDict
 from scipy.special import gamma
 import numpy as np
 import math as math
@@ -54,11 +55,7 @@ class ModelVAE(torch.nn.Module):
     def __init__(self, h_dim: int, components: List[Component],
                  mask,
                  dataset: VaeDataset,
-                 scalar_parametrization: bool,
-                 use_relu: bool,
-                 n_batch: int = 0,
-                 use_hsic: bool = False,
-                 hsic_weight: int = 1000) -> None:
+                 config: ConfigDict) -> None:
         """
         ModelVAE initializer
         :param h_dim: dimension of the hidden layers
@@ -68,13 +65,14 @@ class ModelVAE(torch.nn.Module):
         self.device = torch.device("cpu")
         self.components = nn.ModuleList(components)
 
+        n_batch = config.n_batch
         if type(n_batch) != list:
             n_batch = [n_batch]
         self.n_batch = n_batch
         print(f"{self.n_batch} in vae.py")
         self.total_num_of_batches = sum(self.n_batch)
 
-        self.use_relu = use_relu
+        self.use_relu = config.use_relu
         if self.use_relu:
           print("Using relu in forward() and log_likelihood.")
         else:
@@ -92,19 +90,25 @@ class ModelVAE(torch.nn.Module):
         mask_z[:dim_all[0]] = 1
         self.mask_z = torch.tensor(mask_z)
         
-        self.use_hsic = use_hsic
+        self.use_hsic = config.use_hsic
         print(f"use_hsic: {self.use_hsic}")
-        self.hsic_weight = hsic_weight
+        self.hsic_weight = config.hsic_weight
         print(f"hsic_weight: {self.hsic_weight}")
         self.reconstruction_loss = dataset.reconstruction_loss  # dataset-dependent, not implemented
 
         self.total_z_dim = sum(component.dim for component in components)
         for component in components:
-            component.init_layers(h_dim, scalar_parametrization=scalar_parametrization)
+            component.init_layers(h_dim, scalar_parametrization=config.scalar_parametrization)
 
     def to(self, device: torch.device) -> "ModelVAE":
         self.device = device
         return super().to(device)
+
+    def _init_weights_xavier_1(self, module):
+        if isinstance(module, torch.nn.Linear):
+            print('initializing Xavier_1 weights in {}'.format(module.__class__.__name__))
+            nn.init.xavier_uniform_(module.weight)
+            module.bias.data.fill_(0.01)
 
     def encode(self, x: Tensor) -> Tensor:
         raise NotImplementedError
