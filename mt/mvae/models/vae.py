@@ -90,6 +90,8 @@ class ModelVAE(torch.nn.Module):
         mask_z[:dim_all[0]] = 1
         self.mask_z = torch.tensor(mask_z)
         
+        self.activation = config.activation
+
         self.use_hsic = config.use_hsic
         print(f"use_hsic: {self.use_hsic}")
         self.hsic_weight = config.hsic_weight
@@ -108,6 +110,12 @@ class ModelVAE(torch.nn.Module):
         if isinstance(module, torch.nn.Linear):
             print('initializing Xavier_1 weights in {}'.format(module.__class__.__name__))
             nn.init.xavier_uniform_(module.weight)
+            module.bias.data.fill_(0.01)
+
+    def _init_weights_he_1(self, module):
+        if isinstance(module, torch.nn.Linear):
+            print('initializing He_1 weights in {}'.format(module.__class__.__name__))
+            nn.init.kaiming_normal_(module.weight, self.activation)
             module.bias.data.fill_(0.01)
 
     def encode(self, x: Tensor) -> Tensor:

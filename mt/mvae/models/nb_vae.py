@@ -58,6 +58,9 @@ class NBVAE(ModelVAE):
         # multi-layer
         # http://adamlineberry.ai/vae-series/vae-code-experiments
         
+        self.activation = config.activation
+        print(f"self.activation: {self.activation}")
+
         input_dim = dataset.in_dim
         if not self.batch_invariant:
             input_dim = input_dim + self.total_num_of_batches
@@ -65,10 +68,16 @@ class NBVAE(ModelVAE):
         print("input_dim:", input_dim)
         encoder_szs = [input_dim] + [128, 64, h_dim]
         encoder_layers = []
+      
         for in_sz, out_sz in zip(encoder_szs[:-1], encoder_szs[1:]):
             encoder_layers.append(nn.Linear(in_sz, out_sz))
             # encoder_layers.append(nn.BatchNorm1d(out_sz, momentum=0.99, eps=0.001))
-            encoder_layers.append(nn.GELU())
+            if self.activation == "relu":
+                encoder_layers.append(nn.ReLU())
+            elif self.activation == "leaky_relu":
+                encoder_layers.append(nn.LeakyReLU())
+            else:
+                encoder_layers.append(nn.GELU())
             # nn.BatchNorm1d(out_sz, momentum=0.01, eps=0.001)
             # encoder_layers.append(nn.BatchNorm1d(out_sz, momentum=0.99, eps=0.001))
 
@@ -80,7 +89,12 @@ class NBVAE(ModelVAE):
         for in_sz, out_sz in zip(hidden_sizes[:-1], hidden_sizes[1:]):
             decoder_layers.append(nn.Linear(in_sz, out_sz))
             # decoder_layers.append(nn.BatchNorm1d(out_sz, momentum=0.99, eps=0.001))
-            decoder_layers.append(nn.GELU())
+            if self.activation == "relu":
+                decoder_layers.append(nn.ReLU())
+            elif self.activation == "leaky_relu":
+                decoder_layers.append(nn.LeakyReLU())
+            else:
+                decoder_layers.append(nn.GELU())
             # nn.BatchNorm1d(out_sz, momentum=0.01, eps=0.001)
             # decoder_layers.append(nn.BatchNorm1d(out_sz, momentum=0.99, eps=0.001))
 
@@ -95,6 +109,8 @@ class NBVAE(ModelVAE):
 
         if config.init == "xavier_1":
             self.apply(self._init_weights_xavier_1)
+        if config.init == "he_1":
+            self.apply(self._init_weights_he_1)
 
     def encode(self, x: Tensor, batch: Tensor) -> Tensor:
         x = x.squeeze()
