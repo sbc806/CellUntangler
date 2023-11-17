@@ -12,6 +12,7 @@ def get_config():
     config.n_batch = [1]
     config.batch_invariant = True
     config.init = None
+    config.activation = "gelu"
     config.use_hsic = False
     config.hsic_weight = 1000
 
