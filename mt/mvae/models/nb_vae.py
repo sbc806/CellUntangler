@@ -110,7 +110,7 @@ class NBVAE(ModelVAE):
         if config.init == "xavier_1":
             self.apply(self._init_weights_xavier_1)
         if config.init == "he_1":
-            self.apply(self._init_weights_he_1)
+            self.apply(self._init_weights_he_1, self.activation)
 
     def encode(self, x: Tensor, batch: Tensor) -> Tensor:
         x = x.squeeze()
