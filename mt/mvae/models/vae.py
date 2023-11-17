@@ -115,7 +115,7 @@ class ModelVAE(torch.nn.Module):
     def _init_weights_he_1(self, module):
         if isinstance(module, torch.nn.Linear):
             print('initializing He_1 weights in {}'.format(module.__class__.__name__))
-            nn.init.kaiming_normal_(module.weight, self.activation)
+            nn.init.kaiming_normal_(module.weight, nonlinearity=self.activation)
             module.bias.data.fill_(0.01)
 
     def encode(self, x: Tensor) -> Tensor:
