@@ -91,7 +91,7 @@ class ModelVAE(torch.nn.Module):
         self.mask_z = torch.tensor(mask_z)
         
         self.activation = config.activation
-
+        print(f"self.activation: {self.activation}")
         self.use_hsic = config.use_hsic
         print(f"use_hsic: {self.use_hsic}")
         self.hsic_weight = config.hsic_weight
