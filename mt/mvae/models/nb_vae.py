@@ -107,9 +107,13 @@ class NBVAE(ModelVAE):
         self.fc_mu = nn.Linear(128, output_dim)
         self.fc_sigma = nn.Linear(128, output_dim)
 
-        if config.init == "xavier_1":
+        if config.init == "normal":
+            self.apply(self._init_weights_normal)
+        elif config.init == "xavier_uniform":
+            self.apply(self._init_weights_xavier_uniform)
+        elif config.init == "xavier_1":
             self.apply(self._init_weights_xavier_1)
-        if config.init == "he_1":
+        elif config.init == "he_1":
             self.apply(self._init_weights_he_1)
 
     def encode(self, x: Tensor, batch: Tensor) -> Tensor:

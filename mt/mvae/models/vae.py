@@ -106,6 +106,18 @@ class ModelVAE(torch.nn.Module):
         self.device = device
         return super().to(device)
 
+    def _init_weights_normal(self, module):
+        if isinstance(module, torch.nn.Linear):
+            print('initializing Normal weights in {}'.format(module.__class__.__name__))
+            nn.init.normal_(module.weight)
+            nn.init.normal_(module.bias)
+
+    def _init_weights_xavier_uniform(self, module):
+        if isinstance(module, torch.nn.Linear):
+            print('initializing Xavier uniform weights in {}'.format(module.__class__.__name__))
+            nn.init.xavier_uniform_(module.weight)
+            nn.init.xavier_uniform_(module.bias)
+
     def _init_weights_xavier_1(self, module):
         if isinstance(module, torch.nn.Linear):
             print('initializing Xavier_1 weights in {}'.format(module.__class__.__name__))
@@ -127,7 +139,7 @@ class ModelVAE(torch.nn.Module):
     # it's the forward function that defines the network structure
     def forward(self, x: Tensor, batch: Tensor) -> Outputs:
         reparametrized = []
-
+        all_z_params = []
         if self.total_num_of_batches != 0:
             if len(self.n_batch) > 1:
                 self.batch = self.multi_one_hot(batch, self.n_batch)
@@ -155,6 +167,7 @@ class ModelVAE(torch.nn.Module):
                     z = torch.cat((torch.relu(z[..., 0:1]), z[..., 1:]), dim=1)
 
             reparametrized.append(Reparametrized(q_z, p_z, z, data))
+            all_z_params.append(z_params)
 
         concat_z = torch.cat(tuple(x.z for x in reparametrized), dim=-1)
         mu1, sigma_square1 = self.decode(concat_z * self.mask_z, self.batch)
@@ -172,7 +185,10 @@ class ModelVAE(torch.nn.Module):
             (sigma_square1, sigma_square[self.num_gene[0]:]), dim=-1)
         # print(f"mu.shape: {mu.shape}")
         # print(f"sigma_square.shape: {sigma_square.shape}")
-        return reparametrized, concat_z, mu, sigma_square
+        
+        concat_z_params = torch.cat(tuple(z_params for z_params in all_z_params), dim=-1)
+
+        return reparametrized, concat_z, mu, sigma_square, concat_z_params
 
     @torch.no_grad()
     def compute_r2(self, x):
