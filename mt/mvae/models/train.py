@@ -18,6 +18,7 @@ import os
 from typing import Any, Dict, List, Mapping, Optional, Sequence, Tuple
 import warnings
 
+import matplotlib.pyplot as plt
 import numpy as np
 import torch
 from torch.utils.data import DataLoader
@@ -364,16 +365,16 @@ class Trainer:
 
         return CurvatureOptimizer(net_optimizer, neg=c_opt_neg, pos=c_opt_pos, should_do_curvature_step=condition)
 
-        def plot_loss(self, desired_loss="elbo", save=None):
-            epochs = sorted(self.epoch_train_results.keys())
+    def plot_loss(self, desired_loss="elbo", save=None):
+        epochs = sorted(self.epoch_train_results.keys())
 
-            losses = [self.epoch_train_results[epoch_num][desired_loss] for epoch_num in epochs]
+        losses = [self.epoch_train_results[epoch_num][desired_loss] for epoch_num in epochs]
             
-            plt.plot(epochs, losses)
-            plt.xlabel("Epoch")
-            plt.ylabel(desired_loss)
+        plt.plot(epochs, losses)
+        plt.xlabel("Epoch")
+        plt.ylabel(desired_loss)
             
-            if save:
-                plt.savefig(save)
-            plt.show()
-            plt.close()
+        if save:
+            plt.savefig(save)
+        plt.show()
+        plt.close()
