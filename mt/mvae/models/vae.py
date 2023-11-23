@@ -186,7 +186,7 @@ class ModelVAE(torch.nn.Module):
         # print(f"mu.shape: {mu.shape}")
         # print(f"sigma_square.shape: {sigma_square.shape}")
         
-        concat_z_params = torch.cat(tuple(z_params for z_params in all_z_params), dim=-1)
+        concat_z_params = torch.cat(tuple(z_params[0] for z_params in all_z_params), dim=-1)
 
         return reparametrized, concat_z, mu, sigma_square, concat_z_params
 
