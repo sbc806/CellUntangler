@@ -65,6 +65,8 @@ class ModelVAE(torch.nn.Module):
         self.device = torch.device("cpu")
         self.components = nn.ModuleList(components)
 
+        self.config = config
+
         n_batch = config.n_batch
         if type(n_batch) != list:
             n_batch = [n_batch]
@@ -115,18 +117,24 @@ class ModelVAE(torch.nn.Module):
     def _init_weights_xavier_uniform(self, module):
         if isinstance(module, torch.nn.Linear):
             print('initializing Xavier uniform weights in {}'.format(module.__class__.__name__))
-            nn.init.xavier_uniform_(module.weight)
-            nn.init.xavier_uniform_(module.bias)
-
-    def _init_weights_xavier_1(self, module):
-        if isinstance(module, torch.nn.Linear):
-            print('initializing Xavier_1 weights in {}'.format(module.__class__.__name__))
-            nn.init.xavier_uniform_(module.weight)
+            nn.init.xavier_uniform_(module.weight, gain=self.config.gain)
             module.bias.data.fill_(0.01)
 
-    def _init_weights_he_1(self, module):
+    def _init_weights_xavier_normal(self, module):
         if isinstance(module, torch.nn.Linear):
-            print('initializing He_1 weights in {}'.format(module.__class__.__name__))
+            print('initializing Xavier Normal weights in {}'.format(module.__class__.__name__))
+            nn.init.xavier_normal_(module.weight, gain=self.config.gain)
+            module.bias.data.fill_(0.01)
+
+    def _init_weights_he_uniform(self, module):
+        if isinstance(module, torch.nn.Linear):
+            print('initializing He uniform weights in {}'.format(module.__class__.__name__))
+            nn.init.kaiming_uniform_(module.weight, nonlinearity=self.activation)
+            module.bias.data.fill_(0.01)
+
+    def _init_weights_he_normal(self, module):
+        if isinstance(module, torch.nn.Linear):
+            print('initializing He Normal weights in {}'.format(module.__class__.__name__))
             nn.init.kaiming_normal_(module.weight, nonlinearity=self.activation)
             module.bias.data.fill_(0.01)
 

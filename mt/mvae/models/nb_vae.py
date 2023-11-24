@@ -76,6 +76,8 @@ class NBVAE(ModelVAE):
                 encoder_layers.append(nn.ReLU())
             elif self.activation == "leaky_relu":
                 encoder_layers.append(nn.LeakyReLU())
+            elif self.activation == "tanh":
+                encoder_layers.append(nn.Tanh())
             else:
                 encoder_layers.append(nn.GELU())
             # nn.BatchNorm1d(out_sz, momentum=0.01, eps=0.001)
@@ -93,6 +95,8 @@ class NBVAE(ModelVAE):
                 decoder_layers.append(nn.ReLU())
             elif self.activation == "leaky_relu":
                 decoder_layers.append(nn.LeakyReLU())
+            elif self.activation == "tanh":
+                decoder_layers.append(nn.Tanh())
             else:
                 decoder_layers.append(nn.GELU())
             # nn.BatchNorm1d(out_sz, momentum=0.01, eps=0.001)
@@ -111,10 +115,12 @@ class NBVAE(ModelVAE):
             self.apply(self._init_weights_normal)
         elif config.init == "xavier_uniform":
             self.apply(self._init_weights_xavier_uniform)
-        elif config.init == "xavier_1":
-            self.apply(self._init_weights_xavier_1)
-        elif config.init == "he_1":
-            self.apply(self._init_weights_he_1)
+        elif config.init == "xavier_normal":
+            self.apply(self._init_weights_xavier_normal)
+        elif config.init == "he_uniform":
+            self.apply(self._init_weights_he_uniform)
+        elif config.init == "he_normal":
+            self.apply(self._init_weights_he_normal)
 
     def encode(self, x: Tensor, batch: Tensor) -> Tensor:
         x = x.squeeze()
