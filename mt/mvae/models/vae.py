@@ -115,6 +115,7 @@ class ModelVAE(torch.nn.Module):
             nn.init.normal_(module.bias)
 
     def _init_weights_xavier_uniform(self, module):
+        print(module)
         if isinstance(module, torch.nn.Linear):
             print('initializing Xavier uniform weights in {}'.format(module.__class__.__name__))
             nn.init.xavier_uniform_(module.weight, gain=self.config.gain)
