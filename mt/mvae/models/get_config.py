@@ -21,5 +21,10 @@ def get_config():
     config.max_epochs = 500
     config.learning_rate = 0.001
     config.fixed_curvature = True
+    # Betas
+    config.start = 1.0
+    config.end = 1.0
+    config.end_epoch = 1
+    config.epochs = 200
 
     return config
