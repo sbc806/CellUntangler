@@ -164,7 +164,8 @@ class BatchStats:
         self._log_likelihood = log_likelihood
         self._mutual_info = mutual_info
         self._cov_norm = cov_norm
-
+        print(self._bce.shape)
+        print(self._component_kl.shape)
         self._kl_val = self._kl()
         self._elbo_val = self._elbo(beta)
         self._hsic = hsic
@@ -209,11 +210,13 @@ class BatchStats:
         return self._hsic
 
     def _kl(self) -> Tensor:
+        self._component_kl[0] = self._component_kl * self._beta
         return torch.sum(torch.cat([x.unsqueeze(dim=-1) for x in self._component_kl], dim=-1), dim=-1)
 
     def _elbo(self, beta: float) -> Tensor:
         assert self._bce.shape == self._kl_val.shape
-        return (self._bce - beta * self._kl_val).sum(dim=0)
+        # return (self._bce - beta * self._kl_val).sum(dim=0)
+        return (self._bce - self._kl_val).sum(dim=0)
 
     def convert_to_float(self) -> BatchStatsFloat:
         return BatchStatsFloat(self.bce,
