@@ -158,8 +158,9 @@ class BatchStats:
                  hsic: Optional[float] = None,
                  reconstruction_term_weight: float = 1) -> None:
         self._beta = beta
-
-        # self._bce = bce
+        self._reconstruction_term_weight = reconstruction_term_weight
+        print(self._reconstruction_term_weight)
+        self._bce = bce
         self._component_kl = component_kl
         self._component_kl_mean = [x.sum(dim=0) for x in component_kl]
         self._log_likelihood = log_likelihood
@@ -169,9 +170,7 @@ class BatchStats:
         self._kl_val = self._kl()
         self._elbo_val = self._elbo(beta)
         self._hsic = hsic
-        print("Hello")
-        self._reconstruction_term_weight = reconstruction_term_weight
-        print(self._reconstruction_term_weight)
+                
     @property
     def bce(self) -> Tensor:
         return self._bce.sum(dim=0)
