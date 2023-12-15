@@ -170,7 +170,7 @@ class BatchStats:
         self._elbo_val = self._elbo(beta)
         self._hsic = hsic
 
-        self.reconstruction_term_weight = reconstruction_term_weight
+        self._reconstruction_term_weight = reconstruction_term_weight
 
     @property
     def bce(self) -> Tensor:
@@ -211,6 +211,10 @@ class BatchStats:
     def hsic(self) -> float:
         return self._hsic
 
+    @property
+    def reconstruction_term_weight(self):
+        return self._reconstruction_term_weight
+
     def _kl(self) -> Tensor:
         self._component_kl[0] = self._component_kl[0] * self._beta
         return torch.sum(torch.cat([x.unsqueeze(dim=-1) for x in self._component_kl], dim=-1), dim=-1)
@@ -218,7 +222,7 @@ class BatchStats:
     def _elbo(self, beta: float) -> Tensor:
         assert self._bce.shape == self._kl_val.shape
         # return (self._bce - beta * self._kl_val).sum(dim=0)
-        return (self._bce * self.reconstruction_term_weight - self._kl_val).sum(dim=0)
+        return (self._bce * self._reconstruction_term_weight - self._kl_val).sum(dim=0)
 
     def convert_to_float(self) -> BatchStatsFloat:
         return BatchStatsFloat(self.bce,
