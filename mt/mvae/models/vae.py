@@ -67,6 +67,8 @@ class ModelVAE(torch.nn.Module):
 
         self.config = config
 
+        self.reconstruction_term_weight = config.reconstruction_term_weight
+
         n_batch = config.n_batch
         if type(n_batch) != list:
             n_batch = [n_batch]

@@ -155,7 +155,8 @@ class BatchStats:
                  log_likelihood: Optional[Tensor] = None,
                  mutual_info: Optional[Tensor] = None,
                  cov_norm: Optional[Tensor] = None,
-                 hsic: Optional[float] = None) -> None:
+                 hsic: Optional[float] = None,
+                 reconstruction_term_weight: float = 1) -> None:
         self._beta = beta
 
         self._bce = bce
@@ -168,6 +169,8 @@ class BatchStats:
         self._kl_val = self._kl()
         self._elbo_val = self._elbo(beta)
         self._hsic = hsic
+
+        self.reconstruction_term_weight = reconstruction_term_weight
 
     @property
     def bce(self) -> Tensor:
@@ -215,7 +218,7 @@ class BatchStats:
     def _elbo(self, beta: float) -> Tensor:
         assert self._bce.shape == self._kl_val.shape
         # return (self._bce - beta * self._kl_val).sum(dim=0)
-        return (self._bce - self._kl_val).sum(dim=0)
+        return (self._bce * self.reconstruction_term_weight - self._kl_val).sum(dim=0)
 
     def convert_to_float(self) -> BatchStatsFloat:
         return BatchStatsFloat(self.bce,
