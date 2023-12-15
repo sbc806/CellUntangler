@@ -164,8 +164,7 @@ class BatchStats:
         self._log_likelihood = log_likelihood
         self._mutual_info = mutual_info
         self._cov_norm = cov_norm
-        print(self._bce.shape)
-        print(self._component_kl.shape)
+        
         self._kl_val = self._kl()
         self._elbo_val = self._elbo(beta)
         self._hsic = hsic
