@@ -169,9 +169,9 @@ class BatchStats:
         self._kl_val = self._kl()
         self._elbo_val = self._elbo(beta)
         self._hsic = hsic
-
+        
         self._reconstruction_term_weight = reconstruction_term_weight
-
+        print(self._reconstruction_term_weight)
     @property
     def bce(self) -> Tensor:
         return self._bce.sum(dim=0)
