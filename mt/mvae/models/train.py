@@ -156,6 +156,8 @@ class Trainer:
             self.epoch += 1
             self._try_test_during_train(test_results, eval_data, likelihood_n, betas)
 
+            count = count + 1
+
         # if not stop_epoch:
         #     warnings.warn("Did not stop using early stopping.")
         # self._load_epoch(stop_epoch)
