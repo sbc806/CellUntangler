@@ -156,6 +156,17 @@ class Trainer:
             self.epoch += 1
             self._try_test_during_train(test_results, eval_data, likelihood_n, betas)
 
+            if visualize_information["visualize"]:
+                if count in visualize_information["epochs"]:
+                    x = visualize_information["x"]
+                    y = visualize_information["y"]
+                    a = self.model(torch.log1p(torch.tensor(x)), torch.tensor(y))
+                    b = a[1]
+                    bb = b.detach().numpy()
+                    embeddings_save_path = visualize_information["embeddings_save_path"]
+                    model_name = visualize_information["model_name"]
+                    np.savetxt(os.path.join(embeddings_save_path, f'{model_name}_all_encode_v63_epoch_{count}.txt'), bb)
+
             count = count + 1
 
         # if not stop_epoch:
