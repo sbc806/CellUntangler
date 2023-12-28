@@ -139,7 +139,7 @@ class Trainer:
                     embeddings_save_path = visualize_information["embeddings_save_path"]
                     model_name = visualize_information["model_name"]
                     bb = b.detach().numpy()
-                    np.savetxt(os.path.join(embeddings_save_path, f'{model_name}_all_encode_v63_epoch_{count}.txt'))
+                    np.savetxt(os.path.join(embeddings_save_path, f'{model_name}_all_encode_v63_epoch_{count}.txt'), bb)
             count = count + 1
 
 
