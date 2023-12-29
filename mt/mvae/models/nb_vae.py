@@ -123,7 +123,10 @@ class NBVAE(ModelVAE):
             self.apply(self._init_weights_he_normal)
         elif config.init == "custom":
             self.components[0].apply(self._init_weights_xavier_uniform)
-          
+        elif config.init == "large_z1":
+            print("Using large z1 initialization")
+            nn.init.normal_(self.components[0].fc_mean.weight, mean=5.0)
+
     def encode(self, x: Tensor, batch: Tensor) -> Tensor:
         x = x.squeeze()
 
