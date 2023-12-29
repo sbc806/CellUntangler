@@ -122,6 +122,14 @@ class Trainer:
         test_results = dict()
 
         count = 0
+        x = visualize_information["x"]
+        y = visualize_information["y"]
+        a = self.model(torch.log1p(torch.tensor(x)), torch.tensor(y))
+        b = a[1]
+        embeddings_save_path = visualize_information["embeddings_save_path"]
+        model_name = visualize_information["model_name"]
+        bb = b.detach().numpy()
+        np.savetxt(os.path.join(embeddings_save_path, f'{model_name}_all_encode_v63_initialization.txt'), bb)
         # Warmup
         for _ in range(warmup):
             beta = self.get_beta(betas)
