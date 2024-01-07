@@ -69,15 +69,16 @@ class UMIVaeDataset(VaeDataset):
     def _load_synth(self, dataset: UmiDataset, train: bool = True, seed: Optional[int] = None) -> DataLoader:
         if seed:
             print("Dataset seed:", seed)
+            np.random.seed(seed)
+            np.random.default_rng(seed)
             g = torch.Generator()
             g.manual_seed(seed)
-            worker_init = self._seed_worker
         else:
             g = None
-            worker_init = None
+            
         return DataLoader(dataset=dataset, batch_size=self.batch_size,
                           num_workers=0, pin_memory=True, shuffle=train,
-                          generator=g, worker_init_fn=worker_init)
+                          generator=g)
 
     def create_loaders(self, x, y, seed=None) -> Tuple[DataLoader, DataLoader]:
         dataset = UmiDataset(x, y)
