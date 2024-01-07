@@ -13,7 +13,7 @@
 # limitations under the License.
 # ==============================================================================
 
-from typing import Tuple, Any
+from typing import Tuple, Any, Optional
 
 import torch
 import torch.nn.functional as F
@@ -59,14 +59,17 @@ class UMIVaeDataset(VaeDataset):
     def __init__(self, batch_size: int, in_dim:int, *args: Any, **kwargs: Any) -> None:
         super().__init__(batch_size, in_dim=in_dim, img_dims=None)
 
-    def _load_synth(self, dataset: UmiDataset, train: bool = True) -> DataLoader:
+    def _load_synth(self, dataset: UmiDataset, train: bool = True, seed: Optional[int] = None) -> DataLoader:
+        if seed:
+            print("Dataset seed:", seed)
+            torch.manual_seed(seed)
         return DataLoader(dataset=dataset, batch_size=self.batch_size,
                           num_workers=0, pin_memory=True, shuffle=train)
 
-    def create_loaders(self, x, y) -> Tuple[DataLoader, DataLoader]:
+    def create_loaders(self, x, y, seed=None) -> Tuple[DataLoader, DataLoader]:
         dataset = UmiDataset(x, y)
 
-        train_loader = self._load_synth(dataset, train=True)
+        train_loader = self._load_synth(dataset, train=True, seed=seed)
 
         return train_loader
 
