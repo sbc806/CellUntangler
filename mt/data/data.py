@@ -3,7 +3,7 @@ import numpy as np
 MAX_VALUE = 1
 LABEL = None
 
-# np.random.seed(0)
+np.random.seed(0)
 
 
 # ==============================================================================

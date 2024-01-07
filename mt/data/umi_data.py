@@ -61,6 +61,7 @@ class UMIVaeDataset(VaeDataset):
         super().__init__(batch_size, in_dim=in_dim, img_dims=None)
 
     def _seed_worker(worker_id):
+        print(torch.initial_seed())
         worker_seed = torch.initial_seed() % 2**32
         np.random.seed(worker_seed)
         np.random.default_rng(worker_seed)
