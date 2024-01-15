@@ -156,7 +156,10 @@ class ModelVAE(torch.nn.Module):
             if len(self.n_batch) > 1:
                 self.batch = self.multi_one_hot(batch, self.n_batch)
             else:
-                self.batch = nn.functional.one_hot(batch[:, 0], self.n_batch[0])
+                if self.zero_batch and self.n_batch[0] == 1:
+                    self.batch = nn.functional.one_hot(batch[:, 0], self.n_batch[0])-1
+                else:
+                    self.batch = nn.functional.one_hot(batch[:, 0], self.n_batch[0])
         else:
             self.batch = None
         if self.config.print_batch:
