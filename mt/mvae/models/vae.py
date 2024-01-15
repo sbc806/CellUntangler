@@ -75,6 +75,7 @@ class ModelVAE(torch.nn.Module):
         self.n_batch = n_batch
         print(f"{self.n_batch} in vae.py")
         self.total_num_of_batches = sum(self.n_batch)
+        self.zero_batch = config.zero_batch
 
         self.use_relu = config.use_relu
         if self.use_relu:
@@ -158,9 +159,10 @@ class ModelVAE(torch.nn.Module):
                 self.batch = nn.functional.one_hot(batch[:, 0], self.n_batch[0])
         else:
             self.batch = None
-        # print(batch)
-        # print(self.batch.shape)
-        # print(self.batch)
+        if self.config.print_batch:
+            print(batch)
+            print(self.batch.shape)
+            print(self.batch)
         for i, component in enumerate(self.components):
             x_mask = x * self.mask[i]
 
@@ -232,7 +234,10 @@ class ModelVAE(torch.nn.Module):
             if len(self.n_batch) > 1:
                 self.batch = self.multi_one_hot(batch, self.n_batch)
             else:
-                self.batch = nn.functional.one_hot(batch[:, 0], self.n_batch[0])
+                if self.n_batch[0] == 1 and self.zero_batch:
+                    self.batch = self.batch - 1
+                else:
+                    self.batch = nn.functional.one_hot(batch[:, 0], self.n_batch[0])
         else:
             self.batch = None
         # print('self.batch:',self.batch)
