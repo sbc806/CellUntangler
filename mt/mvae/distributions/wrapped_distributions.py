@@ -41,6 +41,9 @@ class EuclideanNormal(torch.distributions.Normal, VaeDistribution):
     def log_prob(self, value: Tensor) -> Tensor:
         return super().log_prob(value).sum(dim=-1)
 
+    def log_prob_individual(self, value: Tensor) -> Tensor:
+        return super().log_prob(value)
+
 
 class EuclideanUniform(torch.distributions.Uniform, VaeDistribution):
 
