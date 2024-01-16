@@ -67,6 +67,13 @@ class ModelVAE(torch.nn.Module):
 
         self.config = config
 
+        self.use_btcvae = config.use_btcvae
+        self.btcvae_beta = config.btcvae_beta
+        self.dataset_size = config.dataset_size
+        print("self.use_btcvae:",self.use_btcvae)
+        print("self.btcvae_beta:",self.btcvae_beta)
+        print("self.dataset_size:",self.dataset_size)
+
         self.reconstruction_term_weight = config.reconstruction_term_weight
 
         n_batch = config.n_batch
@@ -322,13 +329,52 @@ class ModelVAE(torch.nn.Module):
         assert torch.isfinite(bce).all()
         # assert (bce >= 0).all()
 
-        component_kl = []
-        weight = [1.0, 1.0]
-        for i, (component, r) in enumerate(zip(self.components, reparametrized)):
-            kl_comp = component.kl_loss(r.q_z, r.p_z, r.z, r.data) * weight[i]
-            # print(kl_comp.shape)
-            assert torch.isfinite(kl_comp).all()
-            component_kl.append(kl_comp)
+        if self.use_btcvae:
+            z1_samples = reparametrized[0].z
+            z1_data = reparametrized[0].data
+            z1_prior_dist = reparametrized[0].p_z
+            z1_q_dist = reparametrized[0].p_z
+
+            z2_samples = reparametrized[1].z
+            z2_data = reparametrized[1].data
+            z2_prior_dist = reparametrized[1].p_z
+            z2_q_dist = reparametrized[1].q_z
+            # Adjusted ELBO
+            log_px = bce
+        
+            dataset_size = self.dataset_size
+            batch_size = z1_samples.shape[0]
+
+            logpz2 = z2_prior_dist.log_prob_individual(z2_samples).view(batch_size, -1).sum(1)
+            logqz2_condx = z2_q_dist.log_prob_individual(z2_samples).view(batch_size, -1).sum(1)
+            
+            expanded_z2_samples = z2_samples.unsqueeze(1).repeat((1, batch_size, 1))
+            _logqz2 = z2_q_dist.log_prob_individual(expanded_z2_samples)
+            print("_logqz2.shape:",_logqz2.shape)
+
+            # Minibatch weighted sampling
+            logqz2_prodmarginals = (torch.logsumexp(_logqz2, dim=1, keepdim=False) - math.log(batch_size * dataset_size)).sum(1)
+            logqz2 = torch.logsumexp(_logqz2.sum(2), dim=1, keepdim=False) - math.log(batch_size * dataset_size)
+
+            lamb = 0
+            z2_kl = (logqz2_condx - logqz2) + \
+                self.btcvae_beta * (logqz2 - logqz2_prodmarginals) + \
+                (1 - lamb) * (logqz2_prodmarginals - logqz2)
+
+            r1 = reparametrized[0]
+            component_1_kl = self.components[0].kl_loss(r1.q_z, r1.p_z, r1.z, r1.data)
+            assert torch.isfinite(component_1_kl).all()
+            assert torch.isfinite(z2_kl).all()
+            component_kl.append(component_1_kl)
+            component_kl.append(z2_kl)
+        else:
+            component_kl = []
+            weight = [1.0, 1.0]
+            for i, (component, r) in enumerate(zip(self.components, reparametrized)):
+                kl_comp = component.kl_loss(r.q_z, r.p_z, r.z, r.data) * weight[i]
+                # print(kl_comp.shape)
+                assert torch.isfinite(kl_comp).all()
+                component_kl.append(kl_comp)
 
         log_likelihood = None
         mi = None
