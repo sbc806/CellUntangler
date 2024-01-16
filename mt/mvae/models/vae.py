@@ -361,6 +361,7 @@ class ModelVAE(torch.nn.Module):
                 self.btcvae_beta * (logqz2 - logqz2_prodmarginals) + \
                 (1 - lamb) * (logqz2_prodmarginals - logqz2)
 
+            component_kl = []
             r1 = reparametrized[0]
             component_1_kl = self.components[0].kl_loss(r1.q_z, r1.p_z, r1.z, r1.data)
             assert torch.isfinite(component_1_kl).all()
