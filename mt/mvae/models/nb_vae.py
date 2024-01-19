@@ -126,6 +126,8 @@ class NBVAE(ModelVAE):
         elif config.init == "large_z1":
             print("Using large z1 initialization")
             nn.init.normal_(self.components[0].fc_mean.weight, mean=10.0)
+        elif config.init == "custom_xavier_normal":
+            self.components[0].apply(self._init_weights_xavier_normal)
 
     def encode(self, x: Tensor, batch: Tensor) -> Tensor:
         x = x.squeeze()
