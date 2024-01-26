@@ -366,7 +366,7 @@ class Trainer:
             embeddings_cat = torch.cat(embeddings[i], dim=0)
             torch.save(embeddings_cat, _filename(component.summary_name(i)))
 
-    def build_optimizer(self, learning_rate: float, fixed_curvature: bool) -> torch.optim.Optimizer:
+    def build_optimizer(self, learning_rate: float, fixed_curvature: bool, use_adamw: bool = False, weight_decay: float = 0) -> torch.optim.Optimizer:
 
         def ncurvature_param_cond(key: str) -> bool:
             return "nradius" in key or "curvature" in key
@@ -382,7 +382,10 @@ class Trainer:
         pos_curv_params = [v for key, v in self.model.named_parameters() if pcurvature_param_cond(key)]
         curv_params = neg_curv_params + pos_curv_params
 
-        net_optimizer = torch.optim.AdamW(net_params, lr=learning_rate)
+        if use_adamw:
+            net_optimizer = torch.optim.AdamW(net_params, lr=learning_rate, weight_decay=weight_decay)
+        else:
+            net_optimizer = torch.optim.Adam(net_params, lr=learning_rate)
         if not fixed_curvature and not curv_params:
             warnings.warn("Fixed curvature disabled, but found no curvature parameters. Did you mean to set "
                           "fixed=True, or not?")
