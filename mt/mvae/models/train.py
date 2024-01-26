@@ -383,7 +383,7 @@ class Trainer:
         curv_params = neg_curv_params + pos_curv_params
 
         if use_adamw:
-            net_optimizer = torch.optim.AdamW(net_params, lr=learning_rate, weight_decay=weight_decay)
+            net_optimizer = torch.optim.AdamW(net_params, lr=learning_rate)
         else:
             net_optimizer = torch.optim.Adam(net_params, lr=learning_rate)
         if not fixed_curvature and not curv_params:
