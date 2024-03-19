@@ -370,7 +370,7 @@ class ModelVAE(torch.nn.Module):
             component_kl.append(z2_kl)
         else:
             component_kl = []
-            weight = [1.0, 1.0]
+            weight = [3.0, 1.0]
             for i, (component, r) in enumerate(zip(self.components, reparametrized)):
                 kl_comp = component.kl_loss(r.q_z, r.p_z, r.z, r.data) * weight[i]
                 # print(kl_comp.shape)
