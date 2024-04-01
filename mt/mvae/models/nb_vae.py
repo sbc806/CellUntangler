@@ -71,6 +71,8 @@ class NBVAE(ModelVAE):
       
         for in_sz, out_sz in zip(encoder_szs[:-1], encoder_szs[1:]):
             encoder_layers.append(nn.Linear(in_sz, out_sz))
+            if config.use_batch_norm:
+                encoder_layers.append(nn.BatchNorm1d(out_sz, momentum=config.momentum, eps=config.eps))
             # encoder_layers.append(nn.BatchNorm1d(out_sz, momentum=0.99, eps=0.001))
             if self.activation == "relu":
                 encoder_layers.append(nn.ReLU())
@@ -90,6 +92,8 @@ class NBVAE(ModelVAE):
         decoder_layers = []
         for in_sz, out_sz in zip(hidden_sizes[:-1], hidden_sizes[1:]):
             decoder_layers.append(nn.Linear(in_sz, out_sz))
+            if config.use_batch_norm:
+                decoder_layers.append(nn.BatchNorm1d(out_sz, momentum=config.momentum, eps=config.eps))
             # decoder_layers.append(nn.BatchNorm1d(out_sz, momentum=0.99, eps=0.001))
             if self.activation == "relu":
                 decoder_layers.append(nn.ReLU())
