@@ -3,6 +3,8 @@ import ml_collections
 def get_config():
     config = ml_collections.ConfigDict()
 
+    config.seed = None
+    
     # Hyperparameters for dataset
     config.batch_size = 128
     
@@ -26,5 +28,14 @@ def get_config():
     config.end = 1.0
     config.end_epoch = 1
     config.epochs = 200
+
+    # Hyperparameters for reconstruction
+    config.reconstruction_term_weight
+    config.use_btcvae = False
+    config.btcvae_beta = 1
+    
+    # Set the batch vector to be all zero if there is only one batch
+    config.zero_batch = False
+    config.print_batch = False
 
     return config
