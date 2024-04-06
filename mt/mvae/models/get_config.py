@@ -30,7 +30,7 @@ def get_config():
     config.epochs = 200
 
     # Hyperparameters for reconstruction
-    config.reconstruction_term_weight
+    config.reconstruction_term_weight = 1
     config.use_btcvae = False
     config.btcvae_beta = 1
     
