@@ -326,8 +326,8 @@ class ModelVAE(torch.nn.Module):
         # bce = self.reconstruction_loss(x_mb_, x_mb).sum(dim=-1)
         full_bce = self.log_likelihood_nb(x_mb, x_mb_, sigma_square_)
         
-        first_bce=full_bce[:,0:self.num_gene[0]]
-        second_bce=full_bce[:,self.num_gene[0]:]
+        first_bce=torch.sum(full_bce[:,0:self.num_gene[0]],dim=-1)
+        second_bce=torch.sum(full_bce[:,self.num_gene[0]:],dim=-1)
 
         bce = torch.sum(full_bce, dim=-1)
         assert torch.isfinite(bce).all()
