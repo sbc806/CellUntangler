@@ -324,8 +324,12 @@ class ModelVAE(torch.nn.Module):
         # For each component
         #
         # bce = self.reconstruction_loss(x_mb_, x_mb).sum(dim=-1)
-        bce = self.log_likelihood_nb(x_mb, x_mb_, sigma_square_)
+        full_bce = self.log_likelihood_nb(x_mb, x_mb_, sigma_square_)
+        
+        first_bce=full_bce[:,0:self.num_gene[0]]
+        second_bce=full_bce[:,self.num_gene[0]:]
 
+        bce = torch.sum(full_bce, dim=-1)
         assert torch.isfinite(bce).all()
         # assert (bce >= 0).all()
 
@@ -389,7 +393,8 @@ class ModelVAE(torch.nn.Module):
             z1_poincare = lorentz_to_poincare(reparametrized[0].z, self.components[0].manifold.curvature)
             batch_hsic = hsic(z1_poincare, reparametrized[1].z) * self.hsic_weight
         # print(f"batch_hsic: {batch_hsic}")
-        return BatchStats(bce, component_kl, beta, log_likelihood, mi, cov_norm, batch_hsic, self.reconstruction_term_weight)
+        # return BatchStats(bce, component_kl, beta, log_likelihood, mi, cov_norm, batch_hsic, self.reconstruction_term_weight)
+        return BatchStats(bce, component_kl, beta, log_likelihood, first_bce, second_bce, batch_hsic, self.reconstruction_term_weight)
 
     def train_step(self, optimizer: torch.optim.Optimizer, x_mb: Tensor, y_mb: Tensor,
                    beta: float) -> Tuple[BatchStatsFloat, Outputs]:
@@ -426,7 +431,8 @@ class ModelVAE(torch.nn.Module):
              torch.lgamma(x + 1) + sigma * torch.log(sigma + eps) - \
              sigma * log_mu_sigma + x * torch.log(mu + eps) - x * log_mu_sigma
 
-        return torch.sum(ll, dim=-1)
+        # return torch.sum(ll, dim=-1)
+        return ll
 
     def multi_one_hot(self, indices, depth_list):
         one_hot_tensor = nn.functional.one_hot(indices[:,0], depth_list[0])
