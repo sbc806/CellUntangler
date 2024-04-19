@@ -51,6 +51,7 @@ class Trainer:
                            train_statistics=train_statistics,
                            test_every=test_every)
         self.epoch_train_results = {}
+        self.epoch_train_stats = {}
 
     @property
     def epoch(self) -> int:
@@ -256,7 +257,8 @@ class Trainer:
             epoch_dict[name] = float(component.manifold.curvature)
             self.stats.add_scalar(f"train/epoch/{name}", component.manifold.curvature, epoch=True)
         print(epoch_dict, flush=True)
-        self.epoch_train_results[self.epoch] = epoch_stats
+        self.epoch_train_results[self.epoch] = epoch_dict
+        self.epoch_train_stats[self.epoch] = epoch_stats
 
         return epoch_stats
 
