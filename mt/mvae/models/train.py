@@ -256,7 +256,7 @@ class Trainer:
             epoch_dict[name] = float(component.manifold.curvature)
             self.stats.add_scalar(f"train/epoch/{name}", component.manifold.curvature, epoch=True)
         print(epoch_dict, flush=True)
-        self.epoch_train_results[self.epoch] = epoch_dict
+        self.epoch_train_results[self.epoch] = epoch_stats
 
         return epoch_stats
 
