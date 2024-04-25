@@ -504,6 +504,7 @@ def bandwidth(d):
     in the case of Gaussian random variables and the use of a RBF kernel, 
     this can be used to select the bandwidth according to the median heuristic
     """
+    print(d)
     gz = 2 * gamma(0.5 * (d+1)) / gamma(0.5 * d)
     return 1. / (2. * gz**2)
     
