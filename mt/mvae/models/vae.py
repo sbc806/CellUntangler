@@ -413,7 +413,7 @@ class ModelVAE(torch.nn.Module):
                                                reparametrized, likelihood_n=0, beta=beta)
 
         if self.config.use_hsic:
-            batch_hsic=hsic(x_mb[:,0:3],x_mb[:,3:])
+            batch_hsic=hsic(concat_z[:,0:3],concat_z[:,3:])
             loss=-(batch_stats.elbo-batch_hsic*self.config.hsic_weight)
             print(loss)
         else:
@@ -527,7 +527,7 @@ def hsic(z, s):
     hsic += torch.mean(zz * ss) 
     hsic += torch.mean(zz) * torch.mean(ss)
     hsic -= 2 * torch.mean( torch.mean(zz, dim=1) * torch.mean(ss, dim=1) )
-    return hsic
+    return torch.sqrt(hsic)
 
 def lorentz_to_poincare(embeddings, curvature):
     return embeddings[:, 1:] / (1 + math.sqrt(abs(curvature)) * embeddings[:, 0:1])
