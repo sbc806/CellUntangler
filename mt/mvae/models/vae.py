@@ -388,10 +388,10 @@ class ModelVAE(torch.nn.Module):
             log_likelihood, mi, cov_norm = self.log_likelihood(x_mb, batch, n=likelihood_n)
 
         batch_hsic = None
-        if self.use_hsic:
+        # if self.use_hsic:
             # hsic = self.calculate_hsic(reparametrized[0].z, reparametrized[1].z) * 1000
-            z1_poincare = lorentz_to_poincare(reparametrized[0].z, self.components[0].manifold.curvature)
-            batch_hsic = hsic(z1_poincare, reparametrized[1].z) * self.hsic_weight
+            # z1_poincare = lorentz_to_poincare(reparametrized[0].z, self.components[0].manifold.curvature)
+            # batch_hsic = hsic(z1_poincare, reparametrized[1].z) * self.hsic_weight
         # print(f"batch_hsic: {batch_hsic}")
         # return BatchStats(bce, component_kl, beta, log_likelihood, mi, cov_norm, batch_hsic, self.reconstruction_term_weight)
         return BatchStats(bce, component_kl, beta, log_likelihood, first_bce, second_bce, batch_hsic, self.reconstruction_term_weight)
@@ -412,7 +412,12 @@ class ModelVAE(torch.nn.Module):
         batch_stats = self.compute_batch_stats(x_mb, x_mb_, y_mb, sigma_square_,
                                                reparametrized, likelihood_n=0, beta=beta)
 
-        loss = -batch_stats.elbo  # Maximize elbo instead of minimizing it.
+        if self.config.use_hsic:
+            batch_hsic=hsic(x_mb[0:3],x_mb[3:])
+            loss=-(batch_stats.elbo-batch_hsic*self.config.hsic_weight)
+            print(loss)
+        else:
+            loss = -batch_stats.elbo  # Maximize elbo instead of minimizing it.
         assert torch.isfinite(loss).all()
         loss.backward()
 
