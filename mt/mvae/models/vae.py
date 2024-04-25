@@ -415,7 +415,11 @@ class ModelVAE(torch.nn.Module):
         if self.config.use_hsic:
             batch_hsic=hsic(concat_z[:,0:3],concat_z[:,3:])
             loss=-(batch_stats.elbo-batch_hsic*self.config.hsic_weight)
-            print(loss)
+            print(batch_hsic)
+        elif self.config.use_average_hsic:
+            batch_hsic=hsic(concat_z[:,0:3],concat_z[:,3:])
+            loss=-(batch_stats.elbo-batch_hsic/self.config.dataset_size*self.config.hsic_weight)
+            print(batch_hsic/self.config.dataset_size*self.config.hsic_weight)
         else:
             loss = -batch_stats.elbo  # Maximize elbo instead of minimizing it.
         assert torch.isfinite(loss).all()
