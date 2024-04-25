@@ -413,7 +413,7 @@ class ModelVAE(torch.nn.Module):
                                                reparametrized, likelihood_n=0, beta=beta)
 
         if self.config.use_hsic:
-            batch_hsic=hsic(x_mb[0:3],x_mb[3:])
+            batch_hsic=hsic(x_mb[:,0:3],x_mb[:,3:])
             loss=-(batch_stats.elbo-batch_hsic*self.config.hsic_weight)
             print(loss)
         else:
