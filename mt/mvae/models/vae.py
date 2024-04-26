@@ -413,11 +413,11 @@ class ModelVAE(torch.nn.Module):
                                                reparametrized, likelihood_n=0, beta=beta)
 
         if self.config.use_hsic:
-            batch_hsic=hsic_hyperbolic(concat_z[:,0:3],concat_z[:,3:],-2,-1)
+            batch_hsic=hsic_hyperbolic(lorentz_to_poincare(concat_z[:,0:3],-2),lorentz_to_poincare(concat_z[:,3:],-1),-2,-1)
             loss=-(batch_stats.elbo-batch_hsic*self.config.hsic_weight)
             print(batch_hsic)
         elif self.config.use_average_hsic:
-            batch_hsic=hsic_hyperbolic(concat_z[:,0:3],concat_z[:,3:],-2,-1)
+            batch_hsic=hsic_hyperbolic(lorentz_to_poincare(concat_z[:,0:3],-2),lorentz_to_poincare(concat_z[:,3:],-1),-2,-1)
             loss=-(batch_stats.elbo-batch_hsic/self.config.dataset_size*self.config.hsic_weight)
             print(batch_hsic/self.config.dataset_size*self.config.hsic_weight)
         else:
