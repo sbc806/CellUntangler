@@ -413,11 +413,11 @@ class ModelVAE(torch.nn.Module):
                                                reparametrized, likelihood_n=0, beta=beta)
 
         if self.config.use_hsic:
-            batch_hsic=hsic(concat_z[:,0:3],concat_z[:,3:])
+            batch_hsic=hsic_hyperbolic(concat_z[:,0:3],concat_z[:,3:],-2,-1)
             loss=-(batch_stats.elbo-batch_hsic*self.config.hsic_weight)
             print(batch_hsic)
         elif self.config.use_average_hsic:
-            batch_hsic=hsic(concat_z[:,0:3],concat_z[:,3:])
+            batch_hsic=hsic_hyperbolic(concat_z[:,0:3],concat_z[:,3:],-2,-1)
             loss=-(batch_stats.elbo-batch_hsic/self.config.dataset_size*self.config.hsic_weight)
             print(batch_hsic/self.config.dataset_size*self.config.hsic_weight)
         else:
@@ -532,6 +532,31 @@ def hsic(z, s):
     hsic += torch.mean(zz) * torch.mean(ss)
     hsic -= 2 * torch.mean( torch.mean(zz, dim=1) * torch.mean(ss, dim=1) )
     return torch.sqrt(hsic)
+
+def K_hyperbolic(x1, x2, gamma=1., curvature=-1):
+    x1 = fd_distance(x1, curvature=curvature)
+    x2 = fd_distance(x2, curvature=curvature)
+    return K(x1, x2, gamma=gamma)
+
+def hsic_hyperbolic(z, s, curvature_1=-1, curvature_2=-1):
+    d_z = list(z.shape)[1]
+    d_s = list(s.shape)[1]
+
+    zz = K_hyperbolic(z, z, gamma=bandwidth(d_z), curvature=curvature_1)
+    ss = K_hyperbolic(s, s, gamma=bandwidth(d_s), curvature=curvature_2)
+
+    hsic = 0
+    hsic += torch.mean(zz * ss)
+    hsic += torch.mean(zz) ** torch.mean(ss)
+    hsic -= 2 * torch.mean(torch.mean(zz, dim=1) * torch.mean(ss, dim=1))
+    return torch.sqrt(hsic)
+
+def fd_distance(z, curvature=-1):
+    z_norm = torch.norm(z, dim=1)
+    abs_curvature = abs(curvature)
+    coefficient = torch.atanh(math.sqrt(abs_curvature)*z_norm)/(math.sqrt(abs_curvature)*z_norm)
+    distance = coefficient.unsqueeze(-1).expand(z.shape)*z
+    return distance
 
 def lorentz_to_poincare(embeddings, curvature):
     return embeddings[:, 1:] / (1 + math.sqrt(abs(curvature)) * embeddings[:, 0:1])
