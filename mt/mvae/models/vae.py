@@ -413,11 +413,11 @@ class ModelVAE(torch.nn.Module):
                                                reparametrized, likelihood_n=0, beta=beta)
 
         if self.config.use_hsic:
-            batch_hsic=hsic_hyperbolic(lorentz_to_poincare(concat_z[:,0:3],-2),lorentz_to_poincare(concat_z[:,3:],-1),-2,-1)
+            batch_hsic=hsic_mixed(lorentz_to_poincare(concat_z[:,0:3],-2),concat_z[:,3:],-2)
             loss=-(batch_stats.elbo-batch_hsic*self.config.hsic_weight)
             print(batch_hsic)
         elif self.config.use_average_hsic:
-            batch_hsic=hsic_hyperbolic(lorentz_to_poincare(concat_z[:,0:3],-2),lorentz_to_poincare(concat_z[:,3:],-1),-2,-1)
+            batch_hsic=hsic_mixed(lorentz_to_poincare(concat_z[:,0:3],-2),concat_z[:,3:],-2)
             loss=-(batch_stats.elbo-batch_hsic/self.config.dataset_size*self.config.hsic_weight)
             print(batch_hsic/self.config.dataset_size*self.config.hsic_weight)
         else:
@@ -548,6 +548,19 @@ def hsic_hyperbolic(z, s, curvature_1=-1, curvature_2=-1):
     hsic = 0
     hsic += torch.mean(zz * ss)
     hsic += torch.mean(zz) ** torch.mean(ss)
+    hsic -= 2 * torch.mean(torch.mean(zz, dim=1) * torch.mean(ss, dim=1))
+    return torch.sqrt(hsic)
+
+def hsic_mixed(z, s , curvature=-1):
+    d_z = list(z.shape)[1]
+    d_s = list(s.shape)[1]
+
+    zz = K_hyperbolic(z, z, gamma=bandwidth(d_z), curvature=curvature)
+    ss = K(s, s, gamma=bandwidth(d_s))
+
+    hsic = 0
+    hsic += torch.mean(zz * ss)
+    hsic += torch.mean(zz) * torch.mean(ss)
     hsic -= 2 * torch.mean(torch.mean(zz, dim=1) * torch.mean(ss, dim=1))
     return torch.sqrt(hsic)
 
