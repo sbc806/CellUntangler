@@ -408,7 +408,7 @@ class ModelVAE(torch.nn.Module):
 
         x_mb = x_mb.to(self.device)
         y_mb = y_mb.to(self.device)
-        reparametrized, concat_z, x_mb_, sigma_square_, concat_z_params = self(torch.log1p(x_mb), y_mb)
+        reparametrized, concat_z, x_mb_, sigma_square_, concat_z_params, _, _ = self(torch.log1p(x_mb), y_mb)
 
         x_mb_ = x_mb_ * library_size[:, None]
 
