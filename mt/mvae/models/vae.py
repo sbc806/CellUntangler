@@ -205,7 +205,7 @@ class ModelVAE(torch.nn.Module):
         # new_reparametrized = [self.compute_r2(x)] + reparametrized[1:]        
         # new_concat_z = torch.cat(tuple(x.z for x in new_reparametrized), dim=-1)
 
-        mu, sigma_square = self.decode(concat_z, self.batch)
+        mu, sigma_square = self.decode(concat_z*self.mask_z1, self.batch)
         # mu, sigma_square = self.decode(new_concat_z)
         mu = torch.cat((mu1, mu[:, self.num_gene[0]:]), dim=-1)
         sigma_square = torch.cat(
@@ -417,11 +417,11 @@ class ModelVAE(torch.nn.Module):
                                                reparametrized, likelihood_n=0, beta=beta)
 
         if self.config.use_hsic:
-            batch_hsic=hsic_mixed(lorentz_to_poincare(concat_z[:,0:3],-2),concat_z[:,3:],-2)
+            batch_hsic=hsic_hyperbolic(lorentz_to_poincare(concat_z[:,0:3],-2),lorentz_to_poincare(concat_z[:,3:],-1),-2,-1)
             loss=-(batch_stats.elbo-batch_hsic*self.config.hsic_weight)
             print(batch_hsic)
         elif self.config.use_average_hsic:
-            batch_hsic=hsic_mixed(lorentz_to_poincare(concat_z[:,0:3],-2),concat_z[:,3:],-2)
+            batch_hsic=hsic_hyperbolic(lorentz_to_poincare(concat_z[:,0:3],-2),lorentz_to_poincare(concat_z[:,3:],-1),-2,-1)
             loss=-(batch_stats.elbo-batch_hsic/self.config.dataset_size*self.config.hsic_weight)
             print(batch_hsic/self.config.dataset_size*self.config.hsic_weight)
         else:
