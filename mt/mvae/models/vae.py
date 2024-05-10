@@ -211,7 +211,7 @@ class ModelVAE(torch.nn.Module):
         
         concat_z_params = torch.cat(tuple(z_params[0] for z_params in all_z_params), dim=-1)
 
-        return reparametrized, concat_z, mu, sigma_square, concat_z_params
+        return reparametrized, concat_z, mu, sigma_square, concat_z_params, mu1, sigma_square1
 
     @torch.no_grad()
     def compute_r2(self, x):
