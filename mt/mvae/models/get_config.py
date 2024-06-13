@@ -7,7 +7,8 @@ def get_config():
     
     # Hyperparameters for dataset
     config.batch_size = 128
-    
+    config.dataset_size = None
+
     # Hyperparameters for model
     config.scalar_parametrization = False
     config.use_relu = False
@@ -17,6 +18,7 @@ def get_config():
     config.gain = 1.0
     config.activation = "gelu"
     config.use_hsic = False
+    config.use_average_hsic = False
     config.hsic_weight = 1000
 
     # Hyperparmeters for training
@@ -28,6 +30,8 @@ def get_config():
     config.end = 1.0
     config.end_epoch = 1
     config.epochs = 200
+    # Batch normalization
+    config.use_batch_norm = False
 
     # Hyperparameters for reconstruction
     config.reconstruction_term_weight = 1

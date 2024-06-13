@@ -163,6 +163,8 @@ class ModelVAE(torch.nn.Module):
     def forward(self, x: Tensor, batch: Tensor) -> Outputs:
         reparametrized = []
         all_z_params = []
+        
+        # Create batch or batches encoding
         if self.total_num_of_batches != 0:
             if len(self.n_batch) > 1:
                 self.batch = self.multi_one_hot(batch, self.n_batch)
@@ -173,10 +175,13 @@ class ModelVAE(torch.nn.Module):
                     self.batch = nn.functional.one_hot(batch[:, 0], self.n_batch[0])
         else:
             self.batch = None
+        
+        # Output batch for viewing
         if self.config.print_batch:
             print(batch)
             print(self.batch.shape)
             print(self.batch)
+        
         for i, component in enumerate(self.components):
             x_mask = x * self.mask[i]
 
@@ -190,6 +195,7 @@ class ModelVAE(torch.nn.Module):
             # print(f"z_mean_h.shape: {z_params[0].shape}")
             # print(f"std.shape: {z_params[1].shape}")
             if self.use_relu:
+                print("Using relu")
                 if 0 == i:
                     z = torch.cat((torch.relu(z[..., 0:1]), z[..., 1:]), dim=1)
 
