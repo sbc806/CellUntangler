@@ -188,7 +188,7 @@ class ModelVAE(torch.nn.Module):
             # Normalization is important for PCA, does not so for NN?
             # if i < 1:
                 # x_mask = torch.nn.functional.normalize(x_mask, p=2, dim=-1)
-            if i == 0 and len(self.n_batch) > 1:
+            if i == 0 and self.n_batch[0] > 1:
                 self.batch = torch.zeros(self.batch.shape)
             else:
                 self.batch = nn.functional.one_hot(batch[:, 0], self.n_batch[0])
