@@ -177,10 +177,10 @@ class ModelVAE(torch.nn.Module):
             self.batch = None
         
         # Output batch for viewing
-        if self.config.print_batch:
-            print(batch)
-            print(self.batch.shape)
-            print(self.batch)
+        # if self.config.print_batch:
+            # print(batch)
+            # print(self.batch.shape)
+            # print(self.batch)
         
         for i, component in enumerate(self.components):
             x_mask = x * self.mask[i]
@@ -193,6 +193,16 @@ class ModelVAE(torch.nn.Module):
             # else:
                 # self.batch = nn.functional.one_hot(batch[:, 0], self.n_batch[0])
             # print(i, self.batch)
+            if i == 0 and len(self.n_batch) > 1:
+                self.batch = torch.zeros(self.batch.shape)
+            elif i > 0 and len(self.n_batch) > 1:
+                self.batch = self.multi_one_hot(batch, self.n_batch)
+            
+            if self.config.print_batch:
+                print(batch)
+                print(self.batch.shape)
+                print(self.batch)
+            
             x_encoded = self.encode(x_mask, self.batch)
 
             q_z, p_z, z_params = component(x_encoded)
