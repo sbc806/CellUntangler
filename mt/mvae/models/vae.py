@@ -226,6 +226,10 @@ class ModelVAE(torch.nn.Module):
         # new_reparametrized = [self.compute_r2(x)] + reparametrized[1:]        
         # new_concat_z = torch.cat(tuple(x.z for x in new_reparametrized), dim=-1)
 
+
+        if self.config.use_z2_no_grad:
+            concat_z = self.create_concat_z(reparametrized[0].z, reparametrized[1].z)
+
         mu, sigma_square = self.decode(concat_z, self.batch)
         # mu, sigma_square = self.decode(new_concat_z)
         mu = torch.cat((mu1, mu[:, self.num_gene[0]:]), dim=-1)
@@ -237,6 +241,12 @@ class ModelVAE(torch.nn.Module):
         concat_z_params = torch.cat(tuple(z_params[0] for z_params in all_z_params), dim=-1)
 
         return reparametrized, concat_z, mu, sigma_square, concat_z_params, mu1, sigma_square1
+
+    def create_concat_z(self, z1, z2):
+        z1_no_grad = z1.copy()
+        z1_no_grad.requires_grad = False
+        concat_z = torch.cat((z1_no_grad, z2), dim=-1)
+        return concat_z
 
     @torch.no_grad()
     def compute_r2(self, x):
