@@ -243,7 +243,7 @@ class ModelVAE(torch.nn.Module):
         return reparametrized, concat_z, mu, sigma_square, concat_z_params, mu1, sigma_square1
 
     def create_concat_z(self, z1, z2):
-        z1_no_grad = z1.copy()
+        z1_no_grad = z1.detach().clone()
         z1_no_grad.requires_grad = False
         concat_z = torch.cat((z1_no_grad, z2), dim=-1)
         return concat_z
