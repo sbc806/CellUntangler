@@ -193,10 +193,11 @@ class ModelVAE(torch.nn.Module):
             # else:
                 # self.batch = nn.functional.one_hot(batch[:, 0], self.n_batch[0])
             # print(i, self.batch)
-            if i == 0 and len(self.n_batch) > 1:
-                self.batch = torch.zeros(self.batch.shape)
-            elif i > 0 and len(self.n_batch) > 1:
-                self.batch = self.multi_one_hot(batch, self.n_batch)
+            if self.config.use_z2_batch_only:
+                if i == 0 and len(self.n_batch) > 1:
+                    self.batch = torch.zeros(self.batch.shape)
+                elif i > 0 and len(self.n_batch) > 1:
+                    self.batch = self.multi_one_hot(batch, self.n_batch)
             
             if self.config.print_batch:
                 print(batch)
@@ -484,7 +485,7 @@ class ModelVAE(torch.nn.Module):
             one_hot_tensor = one_hot_tensor - 1
         for col in range(1, len(depth_list)):
             next_one_hot = nn.functional.one_hot(indices[:,col], depth_list[col])
-            if col == 1:
+            if depth_list[col] == 1:
                 next_one_hot = next_one_hot - 1
             one_hot_tensor = torch.concat((one_hot_tensor, next_one_hot), dim=1)
         
