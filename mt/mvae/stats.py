@@ -215,7 +215,7 @@ class BatchStats:
         return self._reconstruction_term_weight
 
     def _kl(self) -> Tensor:
-        self._component_kl[0] = self._component_kl[0] * self._beta
+        # self._component_kl[0] = self._component_kl[0] * self._beta
         return torch.sum(torch.cat([x.unsqueeze(dim=-1) for x in self._component_kl], dim=-1), dim=-1)
 
     def _elbo(self, beta: float) -> Tensor:
