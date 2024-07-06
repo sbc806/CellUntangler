@@ -160,7 +160,7 @@ class ModelVAE(torch.nn.Module):
         raise NotImplementedError
 
     # it's the forward function that defines the network structure
-    def forward(self, x: Tensor, batch: Tensor) -> Outputs:
+    def forward(self, x: Tensor, batch: Tensor, epoch_num: int = None) -> Outputs:
         reparametrized = []
         all_z_params = []
         
@@ -169,10 +169,9 @@ class ModelVAE(torch.nn.Module):
             if len(self.n_batch) > 1:
                 self.batch = self.multi_one_hot(batch, self.n_batch)
             else:
+                self.batch = nn.functional.one_hot(batch[:, 0], self.n_batch[0])
                 if self.zero_batch and self.n_batch[0] == 1:
-                    self.batch = nn.functional.one_hot(batch[:, 0], self.n_batch[0])-1
-                else:
-                    self.batch = nn.functional.one_hot(batch[:, 0], self.n_batch[0])
+                    self.batch = torch.zeros(self.batch.shape)
         else:
             self.batch = None
         
@@ -229,7 +228,8 @@ class ModelVAE(torch.nn.Module):
 
 
         if self.config.use_z2_no_grad:
-            concat_z = self.create_concat_z(reparametrized[0].z, reparametrized[1].z)
+            if epoch_num >= self.config.start_z2_no_grad:
+                concat_z = self.create_concat_z(reparametrized[0].z, reparametrized[1].z)
 
         mu, sigma_square = self.decode(concat_z, self.batch)
         # mu, sigma_square = self.decode(new_concat_z)
@@ -433,14 +433,14 @@ class ModelVAE(torch.nn.Module):
         return BatchStats(bce, component_kl, beta, log_likelihood, first_bce, second_bce, batch_hsic, self.reconstruction_term_weight)
 
     def train_step(self, optimizer: torch.optim.Optimizer, x_mb: Tensor, y_mb: Tensor,
-                   beta: float) -> Tuple[BatchStatsFloat, Outputs]:
+                   beta: float, epoch_num: int = None) -> Tuple[BatchStatsFloat, Outputs]:
         optimizer.zero_grad()
 
         library_size = torch.sum(x_mb, dim=1)
 
         x_mb = x_mb.to(self.device)
         y_mb = y_mb.to(self.device)
-        reparametrized, concat_z, x_mb_, sigma_square_, concat_z_params, _, _ = self(torch.log1p(x_mb), y_mb)
+        reparametrized, concat_z, x_mb_, sigma_square_, concat_z_params, _, _ = self(torch.log1p(x_mb), y_mb, epoch_num)
 
         x_mb_ = x_mb_ * library_size[:, None]
 
@@ -482,11 +482,11 @@ class ModelVAE(torch.nn.Module):
     def multi_one_hot(self, indices, depth_list):
         one_hot_tensor = nn.functional.one_hot(indices[:,0], depth_list[0])
         if depth_list[0] == 1:
-            one_hot_tensor = one_hot_tensor - 1
+            one_hot_tensor = torch.zeros(one_hot_tensor.shape)
         for col in range(1, len(depth_list)):
             next_one_hot = nn.functional.one_hot(indices[:,col], depth_list[col])
             if depth_list[col] == 1:
-                next_one_hot = next_one_hot - 1
+                next_one_hot = torch.zeroes(next_one_hot.shape)
             one_hot_tensor = torch.concat((one_hot_tensor, next_one_hot), dim=1)
         
         return one_hot_tensor

@@ -236,7 +236,7 @@ class Trainer:
 
         batch_stats = []
         for x_mb, y_mb in train_data:
-            stats, (reparametrized, _, _) = self.model.train_step(optimizer, x_mb, y_mb, beta=beta)
+            stats, (reparametrized, _, _) = self.model.train_step(optimizer, x_mb, y_mb, beta=beta, epoch_num=self.epoch)
 
             if self.stats.train_statistics:
                 stats.summaries(self.stats, prefix="train/batch")
