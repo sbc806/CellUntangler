@@ -228,7 +228,10 @@ class ModelVAE(torch.nn.Module):
 
 
         if self.config.use_z2_no_grad:
-            if epoch_num >= self.config.start_z2_no_grad:
+            if epoch_num is not None:
+                if epoch_num >= self.config.start_z2_no_grad:
+                    concat_z = self.create_concat_z(reparametrized[0].z, reparametrized[1].z)
+            else:
                 concat_z = self.create_concat_z(reparametrized[0].z, reparametrized[1].z)
 
         mu, sigma_square = self.decode(concat_z, self.batch)
