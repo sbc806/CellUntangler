@@ -233,6 +233,11 @@ class ModelVAE(torch.nn.Module):
                     concat_z = self.create_concat_z(reparametrized[0].z, reparametrized[1].z)
             else:
                 concat_z = self.create_concat_z(reparametrized[0].z, reparametrized[1].z)
+        elif self.config.mask_z2:
+            concat_z = concat_z * self.mask_z1
+
+        if self.config.print_concat_z:
+            print(concat_z)
 
         mu, sigma_square = self.decode(concat_z, self.batch)
         # mu, sigma_square = self.decode(new_concat_z)
