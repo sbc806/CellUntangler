@@ -234,7 +234,8 @@ class ModelVAE(torch.nn.Module):
             else:
                 concat_z = self.create_concat_z(reparametrized[0].z, reparametrized[1].z)
         elif self.config.mask_z2:
-            concat_z = concat_z * self.mask_z1
+            if epoch_num <= self.config.end_mask_z2:
+                concat_z = concat_z * self.mask_z1
 
         if self.config.print_concat_z:
             print(concat_z)
