@@ -237,6 +237,8 @@ class ModelVAE(torch.nn.Module):
             if epoch_num is not None:
                 if epoch_num <= self.config.end_mask_z2 and epoch_num >= self.config.start_mask_z2:
                     concat_z = concat_z * self.mask_z1
+            else:
+                concat_z = concat_z * self.mask_z1
 
         if self.config.print_concat_z:
             print(concat_z)
