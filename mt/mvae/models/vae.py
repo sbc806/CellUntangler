@@ -234,9 +234,10 @@ class ModelVAE(torch.nn.Module):
                         print("Creating concat_z")
                     with torch.no_grad():
                         x_encoded = self.encode(x*self.mask[0],self.batch)
+                        component = self.components[0]
                         q_z, p_z, z_params = component(x_encoded)
                         z_no_grad, data = q_z.rsample_with_parts()
-                        print("z_no_grad",z_no_grad.shape,z_no_grad.requires_grad)
+                        
                     concat_z = self.create_concat_z(z_no_grad, reparametrized[1].z)
             # else:
                 # concat_z = self.create_concat_z(reparametrized[0].z, reparametrized[1].z)
