@@ -232,7 +232,12 @@ class ModelVAE(torch.nn.Module):
                 if epoch_num >= self.config.start_z2_no_grad and epoch_num <= self.config.end_z2_no_grad:
                     if self.config.print_use_z2_no_grad:
                         print("Creating concat_z")
-                    concat_z = self.create_concat_z(reparametrized[0].z, reparametrized[1].z)
+                    with torch.no_grad():
+                        x_encoded = self.encode(x*self.mask[0],self.batch)
+                        q_z, p_z, z_params = component(x_encoded)
+                        z_no_grad, data = q_z.rsample_with_parts()
+                    
+                    concat_z = self.create_concat_z(z_no_grad, reparametrized[1].z)
             # else:
                 # concat_z = self.create_concat_z(reparametrized[0].z, reparametrized[1].z)
         if self.config.mask_z2:
