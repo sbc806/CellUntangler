@@ -182,7 +182,10 @@ class ModelVAE(torch.nn.Module):
             # print(self.batch)
         
         for i, component in enumerate(self.components):
-            x_mask = x * self.mask[i]
+            if self.config.ignore_mask:
+                x_mask = x
+            else:
+                x_mask = x * self.mask[i]
 
             # Normalization is important for PCA, does not so for NN?
             # if i < 1:
