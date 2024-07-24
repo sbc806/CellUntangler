@@ -184,6 +184,11 @@ class ModelVAE(torch.nn.Module):
         for i, component in enumerate(self.components):
             if self.config.ignore_mask:
                 x_mask = x
+            elif self.config.ignore_z1_mask:
+                if i == 0:
+                    x_mask = x
+                else:
+                    x_mask = x * self.mask[i]
             else:
                 x_mask = x * self.mask[i]
 
