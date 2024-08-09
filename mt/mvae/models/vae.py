@@ -506,6 +506,10 @@ class ModelVAE(torch.nn.Module):
             print(batch_hsic/self.config.dataset_size*self.config.hsic_weight)
         else:
             loss = -batch_stats.elbo  # Maximize elbo instead of minimizing it.
+            if self.config.use_z1_train:
+                if epoch_num >= self.config.use_z1_train_start and epoch_num <= self.config.use_z1_train_end:
+                    if self.config.use_z1_loss:
+                        loss = -batch_stats.elbo1
         assert torch.isfinite(loss).all()
         loss.backward()
 
