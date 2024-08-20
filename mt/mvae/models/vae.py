@@ -251,10 +251,6 @@ class ModelVAE(torch.nn.Module):
                     # z_no_grad, data = q_z.rsample_with_parts()
                     
                     concat_z = self.create_concat_z(reparametrized[0].z, reparametrized[1].z)
-                    if self.config.use_poincare_z1:
-                        poincare_z1 = lorentz_to_poincare(reparametrized[0].z, -2)
-                        poincare_z1 = torch.cat((torch.zeros((len(poincare_z1),1)), poincare_z1), dim=-1)
-                        concat_z = self.create_concat_z(poincare_z1, reparametrized[1].z)
             # else:
                 # concat_z = self.create_concat_z(reparametrized[0].z, reparametrized[1].z)
         if self.config.mask_z2:
@@ -290,6 +286,10 @@ class ModelVAE(torch.nn.Module):
     def create_concat_z(self, z1, z2):
         z1_no_grad = z1.detach().clone()
         z1_no_grad.requires_grad = False
+        if self.config.use_poincare_z1:
+            poincare_z1_no_grad = lorentz_to_poincare(z1_no_grad, -2)
+            poincare_z1_no_grad = torch.cat((torch.zeros(len(poincare_z1_no_grad), 1), poincare_z1_no_grad), dim=-1)
+            z1_no_grad = poincare_z1_no_grad
         concat_z = torch.cat((z1_no_grad, z2), dim=-1)
         return concat_z
 
