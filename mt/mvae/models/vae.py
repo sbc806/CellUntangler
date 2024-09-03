@@ -96,8 +96,8 @@ class ModelVAE(torch.nn.Module):
         print('self.num_gene:', self.num_gene)
 
         dim_all = [i.dim for i in self.components]
-        if self.config.z1_x2_ffn:
-            dim_all = [self.config.z1_x2_ffn][-1] + [i.dim for i in self.components[1:]]
+        # if self.config.z1_x2_ffn:
+            # dim_all = [self.config.z1_x2_ffn[-1]] + [i.dim for i in self.components[1:]]
         dim_z = sum(dim_all)
 
         mask_z = np.zeros(dim_z)
@@ -117,8 +117,8 @@ class ModelVAE(torch.nn.Module):
         self.reconstruction_loss = dataset.reconstruction_loss  # dataset-dependent, not implemented
 
         self.total_z_dim = sum(component.dim for component in components)
-        if self.config.z1_x2_ffn:
-            self.total_z_dim = sum([self.config.z1_x2_ffn][-1] + [component.dim for component in components[1:]])
+        # if self.config.z1_x2_ffn:
+            # self.total_z_dim = sum([self.config.z1_x2_ffn[-1]] + [component.dim for component in components[1:]])
         for component in components:
             component.init_layers(h_dim, scalar_parametrization=config.scalar_parametrization)
 
@@ -284,7 +284,7 @@ class ModelVAE(torch.nn.Module):
         if self.config.print_concat_z:
             print(concat_z)
 
-        mu, sigma_square = self.decode(concat_z, self.batch)
+        mu, sigma_square = self.decode(concat_z, self.batch, decoding_x2=True)
         # mu, sigma_square = self.decode(new_concat_z)
         mu = torch.cat((mu1, mu[:, self.num_gene[0]:]), dim=-1)
         sigma_square = torch.cat(
