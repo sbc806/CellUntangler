@@ -96,6 +96,8 @@ class ModelVAE(torch.nn.Module):
         print('self.num_gene:', self.num_gene)
 
         dim_all = [i.dim for i in self.components]
+        if self.config.z1_x2_ffn:
+            dim_all = [self.config.z1_x2_ffn][-1] + [i.dim for i in self.components[1:]]
         dim_z = sum(dim_all)
 
         mask_z = np.zeros(dim_z)
@@ -115,8 +117,19 @@ class ModelVAE(torch.nn.Module):
         self.reconstruction_loss = dataset.reconstruction_loss  # dataset-dependent, not implemented
 
         self.total_z_dim = sum(component.dim for component in components)
+        if self.config.z1_x2_ffn:
+            self.total_z_dim = sum([self.config.z1_x2_ffn][-1] + [component.dim for component in components[1:]])
         for component in components:
             component.init_layers(h_dim, scalar_parametrization=config.scalar_parametrization)
+
+        # Construct ffn for z1 when decoding z2 only
+        if self.config.z1_x2_ffn:
+            z1_x2_sizes = [components[0].dim] + self.config.z1_x2_ffn
+            z1_x2_layers = []
+            for in_sz, out_sz in zip(z1_x2_sizes[:-1], z1_x2_sizes[1:]):
+                z1_x2_layers.append(nn.Linear(in_sz, out_sz))
+                z1_x2_layers.append(nn.GELU())
+            self.z1_x2_ffn = nn.Sequential(*z1_x2_layers)
 
     def to(self, device: torch.device) -> "ModelVAE":
         self.device = device
@@ -239,6 +252,10 @@ class ModelVAE(torch.nn.Module):
         # new_reparametrized = [self.compute_r2(x)] + reparametrized[1:]        
         # new_concat_z = torch.cat(tuple(x.z for x in new_reparametrized), dim=-1)
 
+        if self.config.z1_x2_ffn:
+            z1_ffn = self.z1_x2_ffn(reparametrized[0].z)
+            concat_z = torch.cat(tuple([z1_ffn]+[x.z for x in reparametrized[1:]]), dim=-1)
+
         if self.config.use_z2_no_grad:
             if epoch_num is not None:
                 if epoch_num >= self.config.start_z2_no_grad and epoch_num <= self.config.end_z2_no_grad:
@@ -249,8 +266,10 @@ class ModelVAE(torch.nn.Module):
                     # component = self.components[0]
                     # q_z, p_z, z_params = component(x_encoded)
                     # z_no_grad, data = q_z.rsample_with_parts()
-                    
-                    concat_z = self.create_concat_z(reparametrized[0].z, reparametrized[1].z)
+                    if self.config.z1_x2_ffn:
+                        concat_z = self.create_concat_z(z1_ffn, reparametrized[1].z)
+                    else:
+                        concat_z = self.create_concat_z(reparametrized[0].z, reparametrized[1].z)
             # else:
                 # concat_z = self.create_concat_z(reparametrized[0].z, reparametrized[1].z)
         if self.config.mask_z2:
