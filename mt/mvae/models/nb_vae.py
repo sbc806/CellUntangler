@@ -110,9 +110,9 @@ class NBVAE(ModelVAE):
         
         if self.config.z1_x2_ffn:
             decoder_z1_x2_layers = []
-            decoder_z1_x2_layers.append(nn.Linear(self.config.z1_x2_ffn[-1]+self.total_num_of_batches, 64))
+            decoder_z1_x2_layers.append(nn.Linear(self.total_z1_x2_dim+self.total_num_of_batches, 64))
             decoder_z1_x2_layers.append(nn.GELU())
-            decoder_z1_x2_layers = decoder_z1_x2_layers + decoder_layers[1:]
+            decoder_z1_x2_layers = decoder_z1_x2_layers + decoder_layers[2:]
             self.decoder_z1_x2 = nn.Sequential(*decoder_z1_x2_layers)
 
         output_dim = dataset.in_dim

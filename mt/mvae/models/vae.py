@@ -117,8 +117,8 @@ class ModelVAE(torch.nn.Module):
         self.reconstruction_loss = dataset.reconstruction_loss  # dataset-dependent, not implemented
 
         self.total_z_dim = sum(component.dim for component in components)
-        # if self.config.z1_x2_ffn:
-            # self.total_z_dim = sum([self.config.z1_x2_ffn[-1]] + [component.dim for component in components[1:]])
+        if self.config.z1_x2_ffn:
+            self.total_z1_x2_dim = sum([self.config.z1_x2_ffn[-1]] + [component.dim for component in components[1:]])
         for component in components:
             component.init_layers(h_dim, scalar_parametrization=config.scalar_parametrization)
 
