@@ -128,7 +128,7 @@ class ModelVAE(torch.nn.Module):
             z1_x2_layers = []
             for in_sz, out_sz in zip(z1_x2_sizes[:-1], z1_x2_sizes[1:]):
                 z1_x2_layers.append(nn.Linear(in_sz, out_sz))
-                z1_x2_layers.append(nn.GELU())
+                # z1_x2_layers.append(nn.GELU())
             self.z1_x2_ffn = nn.Sequential(*z1_x2_layers)
 
     def to(self, device: torch.device) -> "ModelVAE":
