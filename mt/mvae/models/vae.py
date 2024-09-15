@@ -238,7 +238,7 @@ class ModelVAE(torch.nn.Module):
             reparametrized.append(Reparametrized(q_z, p_z, z, data))
             all_z_params.append(z_params)
 
-        if self.config.print_batch:
+        if self.config.print_batch_1:
             print(batch)
             print(self.batch.shape)
             print(self.batch)
@@ -247,6 +247,15 @@ class ModelVAE(torch.nn.Module):
             poincare_z1 = lorentz_to_poincare(reparametrized[0].z, -2)
             poincare_z1 = torch.cat((torch.zeros((len(poincare_z1),1)), poincare_z1), dim=-1)
             concat_z = torch.cat((poincare_z1, reparametrized[1].z), dim=-1)
+
+        if self.config.use_z2_batch_only:
+            if len(self.n_batch) > 1:
+                self.batch = torch.zeros(self.batch.shape)
+
+        if self.config.print_batch_2:
+            print(batch)
+            print(self.batch.shape)
+            print(self.batch)
 
         mu1, sigma_square1 = self.decode(concat_z * self.mask_z, self.batch)
         mu1 = mu1[:, :self.num_gene[0]]
@@ -288,7 +297,12 @@ class ModelVAE(torch.nn.Module):
         if self.config.print_concat_z:
             print(concat_z)
 
-        if self.config.print_batch:
+        if self.config.use_z2_batch_only:
+            if len(self.n_batch) > 1:
+                self.batch = self.multi_one_hot(batch, self.n_batch)
+
+        if self.config.print_batch_3:
+            print(batch)
             print(self.batch.shape)
             print(self.batch)
         mu, sigma_square = self.decode(concat_z, self.batch, decoding_x2=True)
