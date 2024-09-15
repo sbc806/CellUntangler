@@ -249,7 +249,7 @@ class ModelVAE(torch.nn.Module):
             concat_z = torch.cat((poincare_z1, reparametrized[1].z), dim=-1)
 
         if self.config.use_z2_batch_only:
-            if len(self.n_batch) > 1:
+            if len(self.n_batch) > 1 or self.n_batch[0] > 1:
                 self.batch = torch.zeros(self.batch.shape)
 
         if self.config.print_batch_2:
@@ -298,7 +298,7 @@ class ModelVAE(torch.nn.Module):
             print(concat_z)
 
         if self.config.use_z2_batch_only:
-            if len(self.n_batch) > 1:
+            if len(self.n_batch) > 1 or self.n_batch[0] > 1:
                 self.batch = self.multi_one_hot(batch, self.n_batch)
 
         if self.config.print_batch_3:
