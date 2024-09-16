@@ -322,7 +322,7 @@ class ModelVAE(torch.nn.Module):
         if self.config.use_z2_train:
             if epoch_num is not None:
                 if epoch_num <= self.config.use_z2_train_end and epoch_num >= self.config.use_z2_train_start:
-                    mu = mu[:, self.num.gene[0]:]
+                    mu = mu[:, self.num_gene[0]:]
                     sigma_square = sigma_square[self.num_gene[0]:]
 
         concat_z_params = torch.cat(tuple(z_params[0] for z_params in all_z_params), dim=-1)
