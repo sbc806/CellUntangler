@@ -560,6 +560,10 @@ class ModelVAE(torch.nn.Module):
                 if epoch_num >= self.config.use_z1_train_start and epoch_num <= self.config.use_z1_train_end:
                     if self.config.use_z1_loss:
                         loss = -batch_stats.elbo1
+            if self.config.use_z2_train:
+                if epoch_num >= self.config.use_z2_train_start and epoch_num <= self.config.use_z2_train_end:
+                    if self.config.use_z2_loss:
+                        loss = -batch_stats.elbo2
         assert torch.isfinite(loss).all()
         loss.backward()
 

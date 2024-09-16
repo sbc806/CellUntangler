@@ -172,6 +172,7 @@ class BatchStats:
         self._hsic = hsic
 
         self._elbo1_val = self._elbo1(beta)
+        self._elbo2_val = self._elbo2(beta)
 
     @property
     def bce(self) -> Tensor:
@@ -209,6 +210,10 @@ class BatchStats:
         return self._elbo1_val.sum(dim=-1)
 
     @property
+    def elbo2(self) -> Tensor:
+        return self._elbo2_val.sum(dim=-1)
+
+    @property
     def beta(self) -> float:
         return self._beta
 
@@ -226,6 +231,11 @@ class BatchStats:
 
     def _elbo1(self, beta: float) -> Tensor:
         kl_val = self._component_kl[0]
+        assert self._bce.shape == kl_val.shape
+        return (self._bce * self._reconstruction_term_weight - beta * kl_val).sum(dim=0)
+
+    def _elbo2(self, beta: float) -> Tensor:
+        kl_val = self._component_kl[1]
         assert self._bce.shape == kl_val.shape
         return (self._bce * self._reconstruction_term_weight - beta * kl_val).sum(dim=0)
 
