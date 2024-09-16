@@ -319,6 +319,12 @@ class ModelVAE(torch.nn.Module):
                     mu = mu1
                     sigma_square = sigma_square1
 
+        if self.config.use_z2_train:
+            if epoch_num is not None:
+                if epoch_num <= self.config.use_z2_train_end and epoch_num >= self.config.use_z2_train_start:
+                    mu = mu[:, self.num.gene[0]:]
+                    sigma_square = sigma_square[self.num_gene[0]:]
+
         concat_z_params = torch.cat(tuple(z_params[0] for z_params in all_z_params), dim=-1)
 
         return reparametrized, concat_z, mu, sigma_square, concat_z_params, mu1, sigma_square1
@@ -531,6 +537,10 @@ class ModelVAE(torch.nn.Module):
         if self.config.use_z1_train:
             if epoch_num >= self.config.use_z1_train_start and epoch_num <= self.config.use_z1_train_end:
                 x_mb = x_mb[:, :self.num_gene[0]]
+
+        if self.config.use_z2_train:
+            if epoch_num >= self.config.use_z2_train_start and epoch_num <= self.config.use_z2_train_end:
+                x_mb = x_mb[:, self.num_gene[0]:]
 
         assert x_mb_.shape == x_mb.shape
         batch_stats = self.compute_batch_stats(x_mb, x_mb_, y_mb, sigma_square_,
