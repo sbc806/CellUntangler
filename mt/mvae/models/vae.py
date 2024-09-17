@@ -322,6 +322,8 @@ class ModelVAE(torch.nn.Module):
         if self.config.use_z2_train:
             if epoch_num is not None:
                 if epoch_num <= self.config.use_z2_train_end and epoch_num >= self.config.use_z2_train_start:
+                    if self.config.print_use_z2_train:
+                        print("Training x2 only")
                     mu = mu[:, self.num_gene[0]:]
                     sigma_square = sigma_square[self.num_gene[0]:]
 
