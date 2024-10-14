@@ -91,9 +91,14 @@ class NBVAE(ModelVAE):
         hidden_sizes = [self.total_z_dim + self.total_num_of_batches] + [64, 128]
         decoder_layers = []
         for in_sz, out_sz in zip(hidden_sizes[:-1], hidden_sizes[1:]):
-            decoder_layers.append(nn.Linear(in_sz, out_sz, bias=config.use_bias))
-            if config.use_batch_norm:
-                decoder_layers.append(nn.BatchNorm1d(out_sz, momentum=config.momentum, eps=config.eps))
+            if in_sz == hidden_sizes[0]:
+                decoder_layers.append(nn.Linear(in_sz, out_sz, bias=config.decoder_first_use_bias))
+                if config.decoder_first_batch_norm:
+                    decoder_layers.append(nn.BatchNorm1d(out_sz, momentum=config.momentum, eps=config.eps))
+            else:
+                decoder_layers.append(nn.Linear(in_sz, out_sz, bias=config.use_bias))
+                if config.use_batch_norm:
+                    decoder_layers.append(nn.BatchNorm1d(out_sz, momentum=config.momentum, eps=config.eps))
             # decoder_layers.append(nn.BatchNorm1d(out_sz, momentum=0.99, eps=0.001))
             if self.activation == "relu":
                 decoder_layers.append(nn.ReLU())
