@@ -70,7 +70,7 @@ class NBVAE(ModelVAE):
         encoder_layers = []
       
         for in_sz, out_sz in zip(encoder_szs[:-1], encoder_szs[1:]):
-            encoder_layers.append(nn.Linear(in_sz, out_sz))
+            encoder_layers.append(nn.Linear(in_sz, out_sz, bias=config.use_bias))
             if config.use_batch_norm:
                 encoder_layers.append(nn.BatchNorm1d(out_sz, momentum=config.momentum, eps=config.eps))
             # encoder_layers.append(nn.BatchNorm1d(out_sz, momentum=0.99, eps=0.001))
