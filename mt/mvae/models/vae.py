@@ -464,6 +464,10 @@ class ModelVAE(torch.nn.Module):
         if self.config.second_weight:
             second_bce=second_bce*self.config.second_weight
 
+        if self.config.specific_gene_weight:
+            full_bce[:,0:self.num_gene[0]]=full_bce[:,0:self.num_gene[0]]*self.config.specific_gene_weight
+        if self.config.second_weight:
+            full_bce[:,self.num_gene[0]:]=full_bce[:,self.num_gene[0]:]*self.config.second_weight
         bce = torch.sum(full_bce, dim=-1)
         assert torch.isfinite(bce).all()
         # assert (bce >= 0).all()
