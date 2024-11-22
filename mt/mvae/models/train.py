@@ -28,7 +28,7 @@ from ..components import StereographicallyProjectedSphereComponent, PoincareComp
 from ..components import SphericalComponent, HyperbolicComponent
 from ..ops import hyperbolics as H
 from ..stats import Stats, EpochStats
-from ...visualization.utils import plot_poincare_embeddings
+# from ...visualization.utils import plot_poincare_embeddings
 from ..utils import CurvatureOptimizer
 
 
@@ -61,31 +61,31 @@ class Trainer:
     def epoch(self, value: int) -> None:
         self.stats.epoch = value
 
-    def _load_epoch(self, epoch: int) -> None:
-        self.model.load_state_dict(torch.load(os.path.join(self.chkpt_dir, f"{epoch}.chkpt")))
-        self.model.to(self.model.device)
+    # def _load_epoch(self, epoch: int) -> None:
+        # self.model.load_state_dict(torch.load(os.path.join(self.chkpt_dir, f"{epoch}.chkpt")))
+        # self.model.to(self.model.device)
 
-    def _save_epoch(self, epoch: int) -> None:
-        torch.save(self.model.state_dict(), os.path.join(self.chkpt_dir, f"{epoch}.chkpt"))
+    # def _save_epoch(self, epoch: int) -> None:
+        # torch.save(self.model.state_dict(), os.path.join(self.chkpt_dir, f"{epoch}.chkpt"))
 
-    def _delete_epoch(self, epoch: int) -> None:
-        path = os.path.join(self.chkpt_dir, f"{epoch}.chkpt")
-        if os.path.isfile(path):
-            os.remove(path)
+    # def _delete_epoch(self, epoch: int) -> None:
+        # path = os.path.join(self.chkpt_dir, f"{epoch}.chkpt")
+        # if os.path.isfile(path):
+            # os.remove(path)
 
-    def _update_checkpoints(self, lookahead: int) -> None:
-        delete_epoch = self.epoch - lookahead - 1
-        if delete_epoch >= 0:
-            self._delete_epoch(delete_epoch)
-        self._save_epoch(self.epoch)
+    # def _update_checkpoints(self, lookahead: int) -> None:
+        # delete_epoch = self.epoch - lookahead - 1
+        # if delete_epoch >= 0:
+            # self._delete_epoch(delete_epoch)
+        # self._save_epoch(self.epoch)
 
-    @staticmethod
-    def _should_stop(results: Dict[int, EpochStats], epoch: int, lookahead: int, max_epoch: int) -> Optional[int]:
+    # @staticmethod
+    # def _should_stop(results: Dict[int, EpochStats], epoch: int, lookahead: int, max_epoch: int) -> Optional[int]:
 
-        def _get_elbo(epoch: int) -> float:
-            return float(results[epoch].elbo)
+        # def _get_elbo(epoch: int) -> float:
+            # return float(results[epoch].elbo)
 
-        return None
+        # return None
 
         # cur_stop_step = epoch - lookahead
         # lookahead_interval = range(cur_stop_step + 1, epoch + 1)  # (cur_stop_step, epoch]
@@ -117,7 +117,7 @@ class Trainer:
                        likelihood_n: int = 500,
                        max_epochs: int = 1000,
                        visualize_information = None,) -> Dict[int, EpochStats]:
-        assert warmup >= lookahead
+        # assert warmup >= lookahead
 
         train_results = dict()
         test_results = dict()
@@ -132,12 +132,12 @@ class Trainer:
         bb = b.detach().numpy()
         np.savetxt(os.path.join(embeddings_save_path, f'{model_name}_all_encode_v63_initialization.txt'), bb)
         # Warmup
-        for _ in range(warmup):
+        for _ in range(max_epochs):
             beta = self.get_beta(betas)
             train_results[self.epoch] = self._train_epoch(optimizer, train_data, beta=beta)
             # self._update_checkpoints(lookahead)
             self.epoch += 1
-            self._try_test_during_train(test_results, eval_data, likelihood_n, betas)
+            # self._try_test_during_train(test_results, eval_data, likelihood_n, betas)
 
             if visualize_information["visualize"]:
                 if count in visualize_information["epochs"]:
@@ -153,30 +153,30 @@ class Trainer:
 
 
         # Early stopping active
-        stop_epoch = None
-        for _ in range(warmup, max_epochs):
-            beta = self.get_beta(betas)
-            train_results[self.epoch] = self._train_epoch(optimizer, train_data, beta=beta)
+        # stop_epoch = None
+        # for _ in range(warmup, max_epochs):
+            # beta = self.get_beta(betas)
+            # train_results[self.epoch] = self._train_epoch(optimizer, train_data, beta=beta)
 
-            stop_epoch = Trainer._should_stop(train_results, self.epoch, lookahead, max_epoch=max_epochs - 1)
+            # stop_epoch = Trainer._should_stop(train_results, self.epoch, lookahead, max_epoch=max_epochs - 1)
             # self._update_checkpoints(lookahead)
-            if stop_epoch:
-                break
-            self.epoch += 1
-            self._try_test_during_train(test_results, eval_data, likelihood_n, betas)
+            # if stop_epoch:
+                # break
+            # self.epoch += 1
+            # self._try_test_during_train(test_results, eval_data, likelihood_n, betas)
 
-            if visualize_information["visualize"]:
-                if count in visualize_information["epochs"]:
-                    x = visualize_information["x"]
-                    y = visualize_information["y"]
-                    a = self.model(torch.log1p(torch.tensor(x)), torch.tensor(y))
-                    b = a[1]
-                    bb = b.detach().numpy()
-                    embeddings_save_path = visualize_information["embeddings_save_path"]
-                    model_name = visualize_information["model_name"]
-                    np.savetxt(os.path.join(embeddings_save_path, f'{model_name}_all_encode_v63_epoch_{count}.txt'), bb)
+            # if visualize_information["visualize"]:
+                # if count in visualize_information["epochs"]:
+                    # x = visualize_information["x"]
+                    # y = visualize_information["y"]
+                    # a = self.model(torch.log1p(torch.tensor(x)), torch.tensor(y))
+                    # b = a[1]
+                    # bb = b.detach().numpy()
+                    # embeddings_save_path = visualize_information["embeddings_save_path"]
+                    # model_name = visualize_information["model_name"]
+                    # np.savetxt(os.path.join(embeddings_save_path, f'{model_name}_all_encode_v63_epoch_{count}.txt'), bb)
 
-            count = count + 1
+            # count = count + 1
 
         # if not stop_epoch:
         #     warnings.warn("Did not stop using early stopping.")
@@ -194,12 +194,12 @@ class Trainer:
         #
         # return test_results
 
-    def _try_test_during_train(self, test_results: Mapping[int, EpochStats], eval_data: DataLoader, likelihood_n: int,
-                               betas: Optional[Sequence[float]]) -> None:
-        if self.stats.test_every > 0 and self.epoch % self.stats.test_every == 0:
-            test_results[self.epoch - 1] = self._test_epoch(eval_data,
-                                                            likelihood_n=likelihood_n,
-                                                            beta=self.get_beta(betas))
+    # def _try_test_during_train(self, test_results: Mapping[int, EpochStats], eval_data: DataLoader, likelihood_n: int,
+                               # betas: Optional[Sequence[float]]) -> None:
+        # if self.stats.test_every > 0 and self.epoch % self.stats.test_every == 0:
+            # test_results[self.epoch - 1] = self._test_epoch(eval_data,
+                                                            # likelihood_n=likelihood_n,
+                                                            # beta=self.get_beta(betas))
 
     def train_epochs(self,
                      optimizer: Any,
@@ -238,135 +238,135 @@ class Trainer:
         for x_mb, y_mb in train_data:
             stats, (reparametrized, _, _) = self.model.train_step(optimizer, x_mb, y_mb, beta=beta, epoch_num=self.epoch)
 
-            if self.stats.train_statistics:
-                stats.summaries(self.stats, prefix="train/batch")
-                for i, (component, r) in enumerate(zip(self.model.components, reparametrized)):
-                    self.stats.add_scalar(f"train/batch/{component.summary_name(i)}/curvature",
-                                          component.manifold.curvature)
-                    for key, val in component.summaries(i, r.q_z, prefix="train/batch").items():
-                        self.stats.add_histogram(tag=key, values=val)
+            # if self.stats.train_statistics:
+                # stats.summaries(self.stats, prefix="train/batch")
+                # for i, (component, r) in enumerate(zip(self.model.components, reparametrized)):
+                    # self.stats.add_scalar(f"train/batch/{component.summary_name(i)}/curvature",
+                                          # component.manifold.curvature)
+                    # for key, val in component.summaries(i, r.q_z, prefix="train/batch").items():
+                        # self.stats.add_histogram(tag=key, values=val)
 
             self.stats.global_step += 1
             batch_stats.append(stats)
 
         epoch_stats = EpochStats(batch_stats, length=len(train_data.dataset))
-        epoch_stats.summaries(self.stats, prefix="train/epoch")
+        # epoch_stats.summaries(self.stats, prefix="train/epoch")
         epoch_dict = epoch_stats.to_print()
-        for i, component in enumerate(self.model.components):
-            name = f"{component.summary_name(i)}/curvature"
-            epoch_dict[name] = float(component.manifold.curvature)
-            self.stats.add_scalar(f"train/epoch/{name}", component.manifold.curvature, epoch=True)
+        # for i, component in enumerate(self.model.components):
+            # name = f"{component.summary_name(i)}/curvature"
+            # epoch_dict[name] = float(component.manifold.curvature)
+            # self.stats.add_scalar(f"train/epoch/{name}", component.manifold.curvature, epoch=True)
         print(epoch_dict, flush=True)
         self.epoch_train_results[self.epoch] = epoch_dict
         self.epoch_train_stats[self.epoch] = epoch_stats
 
         return epoch_stats
 
-    def _test_epoch(self, test_data: DataLoader, likelihood_n: int, beta: float) -> EpochStats:
-        print(f"\tEpoch {self.epoch}:\t", end="")
-        self.model.eval()
+    # def _test_epoch(self, test_data: DataLoader, likelihood_n: int, beta: float) -> EpochStats:
+        # print(f"\tEpoch {self.epoch}:\t", end="")
+        # self.model.eval()
 
-        show_embeddings = self.stats.show_embeddings > 0 and self.stats.test_epochs % self.stats.show_embeddings == 0
-        if show_embeddings:
-            embeddings: List[List[torch.Tensor]] = [[] for _ in self.model.components]
-            total_embeddings = []
-            labels = []
+        # show_embeddings = self.stats.show_embeddings > 0 and self.stats.test_epochs % self.stats.show_embeddings == 0
+        # if show_embeddings:
+            # embeddings: List[List[torch.Tensor]] = [[] for _ in self.model.components]
+            # total_embeddings = []
+            # labels = []
 
-        image_summary = False
-        batch_stats = []
-        histograms: Dict[str, List[torch.Tensor]] = defaultdict(list)
-        for batch_idx, (x_mb, y_mb) in enumerate(test_data):
-            x_mb = x_mb.to(self.model.device)
-            reparametrized, concat_z, x_mb_, sigma_square_ = self.model(x_mb, y_mb)
-            stats = self.model.compute_batch_stats(x_mb, x_mb_, y_mb, sigma_square_,
-                                                   reparametrized, likelihood_n=likelihood_n, beta=beta)
-            batch_stats.append(stats.convert_to_float())
+        # image_summary = False
+        # batch_stats = []
+        # histograms: Dict[str, List[torch.Tensor]] = defaultdict(list)
+        # for batch_idx, (x_mb, y_mb) in enumerate(test_data):
+            # x_mb = x_mb.to(self.model.device)
+            # reparametrized, concat_z, x_mb_, sigma_square_ = self.model(x_mb, y_mb)
+            # stats = self.model.compute_batch_stats(x_mb, x_mb_, y_mb, sigma_square_,
+                                                   # reparametrized, likelihood_n=likelihood_n, beta=beta)
+            # batch_stats.append(stats.convert_to_float())
 
-            for i, (component, r) in enumerate(zip(self.model.components, reparametrized)):
-                for key, val in component.summaries(i, r.q_z, prefix="eval/batch").items():
-                    histograms[key].append(val)
-                if show_embeddings and batch_idx % 10 == 0:
-                    embeddings[i].append(r.q_z.loc)
+            # for i, (component, r) in enumerate(zip(self.model.components, reparametrized)):
+                # for key, val in component.summaries(i, r.q_z, prefix="eval/batch").items():
+                    # histograms[key].append(val)
+                # if show_embeddings and batch_idx % 10 == 0:
+                    # embeddings[i].append(r.q_z.loc)
 
-            if show_embeddings and batch_idx % 10 == 0:
-                total_embeddings.append(concat_z)
-                labels.append(y_mb)
+            # if show_embeddings and batch_idx % 10 == 0:
+                # total_embeddings.append(concat_z)
+                # labels.append(y_mb)
 
-            if image_summary:
-                self.stats.add_images("eval/x_input", x_mb, epoch=True)
-                self.stats.add_images("eval/x_recon", torch.sigmoid(x_mb_), epoch=True)
-                image_summary = False
+            # if image_summary:
+                # self.stats.add_images("eval/x_input", x_mb, epoch=True)
+                # self.stats.add_images("eval/x_recon", torch.sigmoid(x_mb_), epoch=True)
+                # image_summary = False
 
-        for key, val_lst in histograms.items():
-            self.stats.add_histogram(tag=key, values=torch.cat(val_lst, dim=0), epoch=True)
+        # for key, val_lst in histograms.items():
+            # self.stats.add_histogram(tag=key, values=torch.cat(val_lst, dim=0), epoch=True)
 
-        if show_embeddings:
-            total_embeddings_cat = torch.cat(total_embeddings, dim=0)
-            labels_cat = torch.flatten(torch.cat(labels, dim=0)).tolist()
-            self.stats.add_embedding(tag="eval/total_embeddings",
-                                     mat=total_embeddings_cat,
-                                     metadata=labels_cat,
-                                     epoch=True)
-            for i, component in enumerate(self.model.components):
-                tag = f"eval/{component.summary_name(i)}/embeddings"
-                embeddings_cat = torch.cat(embeddings[i], dim=0)
-                if component.manifold.curvature < 0:
-                    if isinstance(component, HyperbolicComponent):
-                        embeddings_poincare = H.lorentz_to_poincare(embeddings_cat, radius=component.manifold.radius)
-                    else:
-                        embeddings_poincare = embeddings_cat
-                    fig = plot_poincare_embeddings(embeddings_poincare, labels_cat)
-                    self.stats.add_figure(tag=tag + "_proj", figure=fig, epoch=True)
-                self.stats.add_embedding(tag=tag, mat=embeddings_cat, metadata=labels_cat, epoch=True)
-            self._save_epoch(self.epoch)  # Save an epoch that has embeddings, because the TF projector needs it.
+        # if show_embeddings:
+            # total_embeddings_cat = torch.cat(total_embeddings, dim=0)
+            # labels_cat = torch.flatten(torch.cat(labels, dim=0)).tolist()
+            # self.stats.add_embedding(tag="eval/total_embeddings",
+                                     # mat=total_embeddings_cat,
+                                     # metadata=labels_cat,
+                                     # epoch=True)
+            # for i, component in enumerate(self.model.components):
+                # tag = f"eval/{component.summary_name(i)}/embeddings"
+                # embeddings_cat = torch.cat(embeddings[i], dim=0)
+                # if component.manifold.curvature < 0:
+                    # if isinstance(component, HyperbolicComponent):
+                        # embeddings_poincare = H.lorentz_to_poincare(embeddings_cat, radius=component.manifold.radius)
+                    # else:
+                        # embeddings_poincare = embeddings_cat
+                    # fig = plot_poincare_embeddings(embeddings_poincare, labels_cat)
+                    # self.stats.add_figure(tag=tag + "_proj", figure=fig, epoch=True)
+                # self.stats.add_embedding(tag=tag, mat=embeddings_cat, metadata=labels_cat, epoch=True)
+            # self._save_epoch(self.epoch)  # Save an epoch that has embeddings, because the TF projector needs it.
 
-        epoch_stats = EpochStats(batch_stats, length=len(test_data.dataset))
-        epoch_stats.summaries(self.stats, prefix="eval/epoch")
-        epoch_dict = epoch_stats.to_print()
-        for i, component in enumerate(self.model.components):
-            name = f"{component.summary_name(i)}/curvature"
-            epoch_dict[name] = float(component.manifold.curvature)
-            self.stats.add_scalar(f"eval/epoch/{name}", component.manifold.curvature, epoch=True)
-        print(epoch_dict, flush=True)
+        # epoch_stats = EpochStats(batch_stats, length=len(test_data.dataset))
+        # epoch_stats.summaries(self.stats, prefix="eval/epoch")
+        # epoch_dict = epoch_stats.to_print()
+        # for i, component in enumerate(self.model.components):
+            # name = f"{component.summary_name(i)}/curvature"
+            # epoch_dict[name] = float(component.manifold.curvature)
+            # self.stats.add_scalar(f"eval/epoch/{name}", component.manifold.curvature, epoch=True)
+        # print(epoch_dict, flush=True)
 
-        export_embeddings = self.stats.export_embeddings > 0 \
-            and self.stats.test_epochs % self.stats.export_embeddings == 0
-        if export_embeddings:
-            self._export_representations(test_data)  # TODO: merge this method with _export_representations.
+        # export_embeddings = self.stats.export_embeddings > 0 \
+            # and self.stats.test_epochs % self.stats.export_embeddings == 0
+        # if export_embeddings:
+            # self._export_representations(test_data)  # TODO: merge this method with _export_representations.
 
-        self.model.train()
-        self.stats.test_epochs += 1
-        return epoch_stats
+        # self.model.train()
+        # self.stats.test_epochs += 1
+        # return epoch_stats
 
-    def _export_representations(self, data: DataLoader, mode: str = "eval") -> None:
-        print(f"\tExporting {mode} representations...")
-        self.model.eval()
+    # def _export_representations(self, data: DataLoader, mode: str = "eval") -> None:
+        # print(f"\tExporting {mode} representations...")
+        # self.model.eval()
 
-        repr_folder = os.path.join(self.chkpt_dir, "repr")
-        os.makedirs(repr_folder, exist_ok=True)
+        # repr_folder = os.path.join(self.chkpt_dir, "repr")
+        # os.makedirs(repr_folder, exist_ok=True)
 
-        def _filename(component: str) -> str:
-            return os.path.join(repr_folder, f"{mode}_{component}_{self.epoch}.pt")
+        # def _filename(component: str) -> str:
+            # return os.path.join(repr_folder, f"{mode}_{component}_{self.epoch}.pt")
 
-        embeddings: List[List[torch.Tensor]] = [[] for _ in self.model.components]
-        total_embeddings = []
-        labels = []
-        for batch_idx, (x_mb, y_mb) in enumerate(data):
-            x_mb = x_mb.to(self.model.device)
-            reparametrized, concat_z, x_mb_, sigma_square_ = self.model(x_mb)
+        # embeddings: List[List[torch.Tensor]] = [[] for _ in self.model.components]
+        # total_embeddings = []
+        # labels = []
+        # for batch_idx, (x_mb, y_mb) in enumerate(data):
+            # x_mb = x_mb.to(self.model.device)
+            # reparametrized, concat_z, x_mb_, sigma_square_ = self.model(x_mb)
 
-            for i, (component, r) in enumerate(zip(self.model.components, reparametrized)):
-                embeddings[i].append(r.q_z.loc.to("cpu"))
-            total_embeddings.append(concat_z.to("cpu"))
-            labels.append(y_mb.to("cpu"))
+            # for i, (component, r) in enumerate(zip(self.model.components, reparametrized)):
+                # embeddings[i].append(r.q_z.loc.to("cpu"))
+            # total_embeddings.append(concat_z.to("cpu"))
+            # labels.append(y_mb.to("cpu"))
 
-        total_embeddings_cat = torch.cat(total_embeddings, dim=0)
-        torch.save(total_embeddings_cat, _filename("total"))
-        labels_cat = torch.cat(labels, dim=0)
-        torch.save(labels_cat, _filename("labels"))
-        for i, component in enumerate(self.model.components):
-            embeddings_cat = torch.cat(embeddings[i], dim=0)
-            torch.save(embeddings_cat, _filename(component.summary_name(i)))
+        # total_embeddings_cat = torch.cat(total_embeddings, dim=0)
+        # torch.save(total_embeddings_cat, _filename("total"))
+        # labels_cat = torch.cat(labels, dim=0)
+        # torch.save(labels_cat, _filename("labels"))
+        # for i, component in enumerate(self.model.components):
+            # embeddings_cat = torch.cat(embeddings[i], dim=0)
+            # torch.save(embeddings_cat, _filename(component.summary_name(i)))
 
     def build_optimizer(self, learning_rate: float, fixed_curvature: bool, use_adamw: bool = False, weight_decay: Optional[float] = 0) -> torch.optim.Optimizer:
 
