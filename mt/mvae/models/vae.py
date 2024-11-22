@@ -35,6 +35,7 @@ from ml_collections import ConfigDict
 from scipy.special import gamma
 import numpy as np
 import math as math
+from typing import Optional
 
 
 #TODO: add mask
@@ -55,7 +56,8 @@ class ModelVAE(torch.nn.Module):
     def __init__(self, h_dim: int, components: List[Component],
                  mask,
                  dataset: VaeDataset,
-                 config: ConfigDict) -> None:
+                 config: ConfigDict,
+                 first_signal_components: Optional[List[bool]] = None) -> None:
         """
         ModelVAE initializer
         :param h_dim: dimension of the hidden layers
@@ -99,11 +101,19 @@ class ModelVAE(torch.nn.Module):
         # if self.config.z1_x2_ffn:
             # dim_all = [self.config.z1_x2_ffn[-1]] + [i.dim for i in self.components[1:]]
         dim_z = sum(dim_all)
-
-        mask_z = np.zeros(dim_z)
-        mask_z[:dim_all[0]] = 1
-        self.mask_z = torch.tensor(mask_z)
         
+        mask_z = np.zeros(dim_z)
+        if first_signal_components is None:
+            mask_z[:dim_all[0]] = 1
+            self.mask_z = torch.tensor(mask_z)
+        else:
+            start = 0
+            for i in range(0, len(first_signal_components)):
+                if first_signal_components[i]:
+                    mask_z[start:start+dim_all[i]] = 1
+                start = start + dim_all[i]
+        self.mask_z = torch.tensor(mask_z)
+
         mask_z1=np.zeros(dim_z)
         mask_z1[dim_all[0]:]=1
         self.mask_z1=torch.tensor(mask_z1)
@@ -513,7 +523,7 @@ class ModelVAE(torch.nn.Module):
             component_kl.append(z2_kl)
         else:
             component_kl = []
-            weight = [1.0, 1.0]
+            weight = [1.0] * len(self.components)
             for i, (component, r) in enumerate(zip(self.components, reparametrized)):
                 kl_comp = component.kl_loss(r.q_z, r.p_z, r.z, r.data) * weight[i]
                 # print(kl_comp.shape)
