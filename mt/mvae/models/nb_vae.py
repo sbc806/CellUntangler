@@ -24,6 +24,7 @@ from ...data import VaeDataset
 from ..components import Component
 
 from ml_collections import ConfigDict
+from typing import Optional
 
 EPS = 1e-6
 MAX_SIGMA_SQUARE = 1e10
@@ -34,12 +35,14 @@ class NBVAE(ModelVAE):
     def __init__(self, h_dim: int, components: List[Component],
                  mask,
                  dataset: VaeDataset,
-                 config: ConfigDict) -> None:
+                 config: ConfigDict,
+                 first_signal_components: Optional[List[bool]] = None) -> None:
         super().__init__(h_dim,
                          components,
                          mask,
                          dataset,
-                         config)
+                         config,
+                         first_signal_components)
 
         self.in_dim = dataset.in_dim
         self.h_dim = h_dim
