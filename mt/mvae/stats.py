@@ -118,7 +118,8 @@ class BatchStatsFloat:
     def __init__(self, bce: Tensor, kl: Tensor, elbo: Tensor, log_likelihood: Optional[Tensor],
                  mutual_info: Optional[Tensor], cov_norm: Optional[Tensor], component_kl: List[Tensor],
                  beta: float,
-                 hsic: Optional[float]) -> None:
+                 # hsic: Optional[float]
+                 ) -> None:
         self.bce = bce.item()
         self.kl = kl.item()
         self.elbo = elbo.item()
@@ -156,7 +157,8 @@ class BatchStats:
                  mutual_info: Optional[Tensor] = None,
                  cov_norm: Optional[Tensor] = None,
                  # hsic: Optional[float] = None,
-                 reconstruction_term_weight: float = 1) -> None:
+                 # reconstruction_term_weight: float = 1
+                 ) -> None:
         self._beta = beta
         # self._reconstruction_term_weight = reconstruction_term_weight
         # print(self._reconstruction_term_weight)
@@ -274,7 +276,7 @@ class EpochStats:
         self.beta = bs[0].beta
         assert sum(self.beta == b.beta for b in bs) == len(bs)  # Assert all betas in epoch are the same.
 
-        self.hsic = 0
+        # self.hsic = 0
 
         for batch in bs:
             self.bce += batch.bce
@@ -288,8 +290,8 @@ class EpochStats:
                 self.cov_norm += batch.cov_norm
             for i in range(len(self.component_kl)):
                 self.component_kl[i] += batch.component_kl[i]
-            if batch.hsic:
-                self.hsic += batch.hsic
+            # if batch.hsic:
+                # self.hsic += batch.hsic
         # print(self.hsic, length)
         self.bce /= length
         self.kl /= length
