@@ -4,7 +4,8 @@ def get_config():
     config = ml_collections.ConfigDict()
 
     config.seed = None
-    
+    config.device = "cpu"
+
     # Hyperparameters for dataset
     config.batch_size = 128
     config.dataset_size = None
@@ -17,6 +18,7 @@ def get_config():
     config.init = None
     config.gain = 1.0
     config.activation = "gelu"
+    config.h_dim = 32
     config.use_hsic = False
     config.use_average_hsic = False
     config.hsic_weight = 1000
