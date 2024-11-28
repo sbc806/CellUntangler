@@ -36,20 +36,21 @@ class Trainer:
 
     def __init__(self,
                  model: ModelVAE,
-                 img_dims: Optional[Tuple[int, ...]],
-                 chkpt_dir: str = "./chkpt",
-                 train_statistics: bool = False,
-                 show_embeddings: int = 0,
-                 export_embeddings: int = 0,
-                 test_every: int = 0) -> None:
+                 # img_dims: Optional[Tuple[int, ...]],
+                 # chkpt_dir: str = "./chkpt",
+                 # train_statistics: bool = False,
+                 # show_embeddings: int = 0,
+                 # export_embeddings: int = 0,
+                 # test_every: int = 0
+                 ) -> None:
         self.model = model
-        self.chkpt_dir = chkpt_dir
-        self.stats = Stats(chkpt_dir=chkpt_dir,
-                           img_dims=img_dims,
-                           show_embeddings=show_embeddings,
-                           export_embeddings=export_embeddings,
-                           train_statistics=train_statistics,
-                           test_every=test_every)
+        # self.chkpt_dir = chkpt_dir
+        self.stats = Stats()# chkpt_dir=chkpt_dir,
+                           # img_dims=img_dims,
+                           # show_embeddings=show_embeddings,
+                           # export_embeddings=export_embeddings,
+                           # train_statistics=train_statistics,
+                           # test_every=test_every)
         self.epoch_train_results = {}
         self.epoch_train_stats = {}
 
@@ -107,31 +108,33 @@ class Trainer:
         else:
             return betas[self.epoch]
 
-    def train_stopping(self,
+    def train_epochs(self,
                        optimizer: Any,
                        train_data: DataLoader,
-                       eval_data: DataLoader,
+                       # eval_data: DataLoader,
                        betas: Sequence[float],
-                       warmup: int = 5,
-                       lookahead: int = 2,
+                       # warmup: int = 5,
+                       # lookahead: int = 2,
                        likelihood_n: int = 500,
                        max_epochs: int = 1000,
-                       visualize_information = None,) -> Dict[int, EpochStats]:
+                       visualize_information = None
+                       ) -> Dict[int, EpochStats]:
         # assert warmup >= lookahead
 
         train_results = dict()
         test_results = dict()
 
         count = 0
-        x = visualize_information["x"]
-        y = visualize_information["y"]
-        a = self.model(torch.log1p(torch.tensor(x)), torch.tensor(y))
-        b = a[1]
-        embeddings_save_path = visualize_information["embeddings_save_path"]
-        model_name = visualize_information["model_name"]
-        bb = b.detach().numpy()
-        np.savetxt(os.path.join(embeddings_save_path, f'{model_name}_all_encode_v63_initialization.txt'), bb)
-        # Warmup
+        if visualize_information:
+            x = visualize_information["x"]
+            y = visualize_information["y"]
+            a = self.model(torch.log1p(torch.tensor(x)), torch.tensor(y))
+            b = a[4]
+            embeddings_save_path = visualize_information["embeddings_save_path"]
+            model_name = visualize_information["model_name"]
+            bb = b.detach().numpy()
+            np.savetxt(os.path.join(embeddings_save_path, f'{model_name}_all_encode_v63_initialization_z_params.txt'), bb)
+        
         for _ in range(max_epochs):
             beta = self.get_beta(betas)
             train_results[self.epoch] = self._train_epoch(optimizer, train_data, beta=beta)
@@ -139,16 +142,16 @@ class Trainer:
             self.epoch += 1
             # self._try_test_during_train(test_results, eval_data, likelihood_n, betas)
 
-            if visualize_information["visualize"]:
+            if visualize_information:
                 if count in visualize_information["epochs"]:
                     x = visualize_information["x"]
                     y = visualize_information["y"]
                     a = self.model(torch.log1p(torch.tensor(x)), torch.tensor(y))
-                    b = a[1]
+                    b = a[4]
                     embeddings_save_path = visualize_information["embeddings_save_path"]
                     model_name = visualize_information["model_name"]
                     bb = b.detach().numpy()
-                    np.savetxt(os.path.join(embeddings_save_path, f'{model_name}_all_encode_v63_epoch_{count}.txt'), bb)
+                    np.savetxt(os.path.join(embeddings_save_path, f'{model_name}_all_encode_v63_epoch_{count}_z_params.txt'), bb)
             count = count + 1
 
 
@@ -201,27 +204,27 @@ class Trainer:
                                                             # likelihood_n=likelihood_n,
                                                             # beta=self.get_beta(betas))
 
-    def train_epochs(self,
-                     optimizer: Any,
-                     train_data: DataLoader,
-                     eval_data: DataLoader,
-                     betas: Optional[Sequence[float]],
-                     epochs: int = 300,
-                     likelihood_n: int = 500) -> Dict[int, EpochStats]:
-        test_results = dict()
-        for _ in range(epochs):
-            beta = self.get_beta(betas)
-            self._train_epoch(optimizer, train_data, beta=beta)
-            self.epoch += 1
-            self._try_test_during_train(test_results, eval_data, likelihood_n, betas)
+    # def train_epochs(self,
+                     # optimizer: Any,
+                     # train_data: DataLoader,
+                     # eval_data: DataLoader,
+                     # betas: Optional[Sequence[float]],
+                     # epochs: int = 300,
+                     # likelihood_n: int = 500) -> Dict[int, EpochStats]:
+        # test_results = dict()
+        # for _ in range(epochs):
+            # beta = self.get_beta(betas)
+            # self._train_epoch(optimizer, train_data, beta=beta)
+            # self.epoch += 1
+            # self._try_test_during_train(test_results, eval_data, likelihood_n, betas)
 
-        with torch.set_grad_enabled(False):
-            test_results[self.epoch - 1] = self._test_epoch(eval_data,
-                                                            likelihood_n=likelihood_n,
-                                                            beta=self.get_beta(betas))
+        # with torch.set_grad_enabled(False):
+            # test_results[self.epoch - 1] = self._test_epoch(eval_data,
+                                                            # likelihood_n=likelihood_n,
+                                                            # beta=self.get_beta(betas))
 
-        self._save_epoch(self.epoch)
-        return test_results
+        # self._save_epoch(self.epoch)
+        # return test_results
 
     def _train_epoch(self, optimizer: torch.optim.Optimizer, train_data: DataLoader, beta: float) -> EpochStats:
         print(f"\tTrainEpoch {self.epoch}:\t", end="")
@@ -252,9 +255,9 @@ class Trainer:
         epoch_stats = EpochStats(batch_stats, length=len(train_data.dataset))
         # epoch_stats.summaries(self.stats, prefix="train/epoch")
         epoch_dict = epoch_stats.to_print()
-        # for i, component in enumerate(self.model.components):
-            # name = f"{component.summary_name(i)}/curvature"
-            # epoch_dict[name] = float(component.manifold.curvature)
+        for i, component in enumerate(self.model.components):
+            name = f"{component.summary_name(i)}/curvature"
+            epoch_dict[name] = float(component.manifold.curvature)
             # self.stats.add_scalar(f"train/epoch/{name}", component.manifold.curvature, epoch=True)
         print(epoch_dict, flush=True)
         self.epoch_train_results[self.epoch] = epoch_dict

@@ -15,6 +15,7 @@
 
 from typing import Any
 
+from .vae_dataset import VaeDataset
 # from .umi_data import UMIVaeDataset
 
 __all__ = [
