@@ -1,5 +1,7 @@
 import math as math
 import numpy as np
+import os as os
+
 
 def split_embeddings(model_name, embeddings):
   component_embeddings = {}
@@ -19,6 +21,11 @@ def split_embeddings(model_name, embeddings):
     component_embeddings[f"component{i+1}_{c}"]=embeddings[:,start:start+dim]
     start = start + dim
   return component_embeddings
+
+
+def make_dir(path, dir_name):
+  if not os.path.exists(os.path.join(path, dir_name)):
+      os.mkdir(os.path.join(path, dir_name))
 
 
 def get_mvae_pseudotime(embeddings, curvature, origin, rotation_angle, flip=False, new_origin=None):

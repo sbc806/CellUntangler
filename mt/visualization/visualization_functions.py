@@ -12,7 +12,7 @@ from scipy.signal import savgol_filter
 from .helpers import lorentz_to_poincare
 
 
-tableau_colors = list(mcolors.TABLEAU_COLORS().keys())
+tableau_colors = list(mcolors.TABLEAU_COLORS.keys())
 COLOR_NAMES = tableau_colors + list(mcolors.CSS4_COLORS.keys())
 
 
@@ -89,8 +89,8 @@ def visualize_poincare(poincare_coordinates,
 def compute_umap(adata,
                   l_neighbors,
                   color,
-                  n_pcs=None,
                   embeddings_key,
+                  n_pcs=None,
                   use_original_umap=False,
                   save_figure=False,
                   additional_save_information=[],
@@ -112,6 +112,7 @@ def compute_umap(adata,
     sc.pp.neighbors(adata, n_neighbors=l_neighbors, n_pcs=n_pcs, use_rep=embeddings_key)
     sc.tl.umap(adata)
 
+  save = None
   if save_figure:
     information = [str(n_pcs),
                       embeddings_key,
