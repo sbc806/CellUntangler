@@ -542,8 +542,8 @@ class ModelVAE(torch.nn.Module):
             # z1_poincare = lorentz_to_poincare(reparametrized[0].z, self.components[0].manifold.curvature)
             # batch_hsic = hsic(z1_poincare, reparametrized[1].z) * self.hsic_weight
         # print(f"batch_hsic: {batch_hsic}")
-        # return BatchStats(bce, component_kl, beta, log_likelihood, mi, cov_norm, batch_hsic, self.reconstruction_term_weight)
-        return BatchStats(bce, component_kl, beta, log_likelihood, first_bce, second_bce, batch_hsic, self.reconstruction_term_weight)
+        return BatchStats(bce, component_kl, beta, log_likelihood, mi, cov_norm)
+        # return BatchStats(bce, component_kl, beta, log_likelihood, first_bce, second_bce, batch_hsic, self.reconstruction_term_weight)
 
     def train_step(self, optimizer: torch.optim.Optimizer, x_mb: Tensor, y_mb: Tensor,
                    beta: float, epoch_num: int = None) -> Tuple[BatchStatsFloat, Outputs]:
