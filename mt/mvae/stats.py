@@ -200,10 +200,10 @@ class BatchStats:
 
     @property
     def elbo(self) -> Tensor:
-        if self._hsic is None:
-            return self._elbo_val.sum(dim=-1)
-        else:
-            return self._elbo_val.sum(dim=-1) - self._hsic
+        # if self._hsic is None:
+        return self._elbo_val.sum(dim=-1)
+        # else:
+            # return self._elbo_val.sum(dim=-1) - self._hsic
 
     # @property
     # def elbo1(self) -> Tensor:
