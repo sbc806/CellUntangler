@@ -38,7 +38,7 @@ def get_config():
     # config.use_average_hsic = False
     # config.hsic_weight = 1000
     # True to use stop gradient, False otherwise
-    config.use_z2_no_grad
+    config.use_z2_no_grad = False
     # The epoch to start using stop gradient if config.use_z2_no_grad = True
     config.start_z2_no_grad = 0
     # The epoch to end using stop gradient if config.use_z2_no_grad = True
