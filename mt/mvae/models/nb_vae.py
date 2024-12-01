@@ -167,8 +167,8 @@ class NBVAE(ModelVAE):
         assert len(concat_z.shape) >= 2
         bs = concat_z.size(-2)
 
-        if self.total_num_of_batches != 0:
-            concat_z = torch.concat((concat_z, batch), dim=1)
+        # if self.total_num_of_batches != 0:
+        concat_z = torch.concat((concat_z, batch), dim=1)
         # if self.config.z1_x2_ffn and decoding_x2:
             # x = self.decoder_z1_x2(concat_z)
         # else:

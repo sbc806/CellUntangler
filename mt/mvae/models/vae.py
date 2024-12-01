@@ -71,10 +71,10 @@ class ModelVAE(torch.nn.Module):
 
         # self.use_btcvae = config.use_btcvae
         # self.btcvae_beta = config.btcvae_beta
-        self.dataset_size = config.dataset_size
+        # self.dataset_size = config.dataset_size
         # print("self.use_btcvae:",self.use_btcvae)
         # print("self.btcvae_beta:",self.btcvae_beta)
-        print("self.dataset_size:",self.dataset_size)
+        # print("self.dataset_size:",self.dataset_size)
 
         # self.reconstruction_term_weight = config.reconstruction_term_weight
 
@@ -188,16 +188,20 @@ class ModelVAE(torch.nn.Module):
         all_z_params = []
         
         # Create batch or batches encoding
-        if self.total_num_of_batches != 0:
-            if len(self.n_batch) > 1:
-                self.batch = self.multi_one_hot(batch, self.n_batch)
-            else:
-                self.batch = nn.functional.one_hot(batch[:, 0], self.n_batch[0])
-                if self.zero_batch and self.n_batch[0] == 1:
-                    self.batch = torch.zeros(self.batch.shape)
+        # if self.total_num_of_batches != 0:
+            # if len(self.n_batch) > 1:
+                # self.batch = self.multi_one_hot(batch, self.n_batch)
+            # else:
+                # self.batch = nn.functional.one_hot(batch[:, 0], self.n_batch[0])
+                # if self.zero_batch and self.n_batch[0] == 1:
+                    # self.batch = torch.zeros(self.batch.shape)
+        # else:
+            # self.batch = None
+        if len(self.n_batch) > 1:
+            self.batch = self.multi_one_hot(batch, self.n_batch)
         else:
-            self.batch = None
-        
+            self.batch = nn.functional.one_hot(batch[:, 0], self.n_batch[0])
+
         # Output batch for viewing
         # if self.config.print_batch:
             # print(batch)
@@ -224,11 +228,11 @@ class ModelVAE(torch.nn.Module):
             # else:
                 # self.batch = nn.functional.one_hot(batch[:, 0], self.n_batch[0])
             # print(i, self.batch)
-            if self.config.use_z2_batch_only:
-                if i == 0 and len(self.n_batch) > 1:
-                    self.batch = torch.zeros(self.batch.shape)
-                elif i > 0 and len(self.n_batch) > 1:
-                    self.batch = self.multi_one_hot(batch, self.n_batch)
+            # if self.config.use_z2_batch_only:
+                # if i == 0 and len(self.n_batch) > 1:
+                    # self.batch = torch.zeros(self.batch.shape)
+                # elif i > 0 and len(self.n_batch) > 1:
+                    # self.batch = self.multi_one_hot(batch, self.n_batch)
             
             # if self.config.print_batch:
                 # print(batch)
@@ -259,9 +263,9 @@ class ModelVAE(torch.nn.Module):
             # poincare_z1 = torch.cat((torch.zeros((len(poincare_z1),1)), poincare_z1), dim=-1)
             # concat_z = torch.cat((poincare_z1, reparametrized[1].z), dim=-1)
 
-        if self.config.use_z2_batch_only:
-            if len(self.n_batch) > 1 or self.n_batch[0] > 1:
-                self.batch = torch.zeros(self.batch.shape)
+        # if self.config.use_z2_batch_only:
+            # if len(self.n_batch) > 1 or self.n_batch[0] > 1:
+                # self.batch = torch.zeros(self.batch.shape)
 
         # if self.config.print_batch_2:
             # print(batch)
@@ -309,9 +313,9 @@ class ModelVAE(torch.nn.Module):
         # if self.config.print_concat_z:
             # print(concat_z)
 
-        if self.config.use_z2_batch_only:
-            if len(self.n_batch) > 1 or self.n_batch[0] > 1:
-                self.batch = self.multi_one_hot(batch, self.n_batch)
+        # if self.config.use_z2_batch_only:
+            # if len(self.n_batch) > 1 or self.n_batch[0] > 1:
+                # self.batch = self.multi_one_hot(batch, self.n_batch)
 
         # if self.config.print_batch_3:
             # print(batch)
@@ -612,12 +616,12 @@ class ModelVAE(torch.nn.Module):
 
     def multi_one_hot(self, indices, depth_list):
         one_hot_tensor = nn.functional.one_hot(indices[:,0], depth_list[0])
-        if depth_list[0] == 1:
-            one_hot_tensor = torch.zeros(one_hot_tensor.shape)
+        # if depth_list[0] == 1:
+            # one_hot_tensor = torch.zeros(one_hot_tensor.shape)
         for col in range(1, len(depth_list)):
             next_one_hot = nn.functional.one_hot(indices[:,col], depth_list[col])
-            if depth_list[col] == 1:
-                next_one_hot = torch.zeroes(next_one_hot.shape)
+            # if depth_list[col] == 1:
+                # next_one_hot = torch.zeroes(next_one_hot.shape)
             one_hot_tensor = torch.concat((one_hot_tensor, next_one_hot), dim=1)
         
         return one_hot_tensor
