@@ -69,33 +69,33 @@ class ModelVAE(torch.nn.Module):
 
         self.config = config
 
-        self.use_btcvae = config.use_btcvae
-        self.btcvae_beta = config.btcvae_beta
+        # self.use_btcvae = config.use_btcvae
+        # self.btcvae_beta = config.btcvae_beta
         self.dataset_size = config.dataset_size
-        print("self.use_btcvae:",self.use_btcvae)
-        print("self.btcvae_beta:",self.btcvae_beta)
+        # print("self.use_btcvae:",self.use_btcvae)
+        # print("self.btcvae_beta:",self.btcvae_beta)
         print("self.dataset_size:",self.dataset_size)
 
-        self.reconstruction_term_weight = config.reconstruction_term_weight
+        # self.reconstruction_term_weight = config.reconstruction_term_weight
 
         n_batch = config.n_batch
         if type(n_batch) != list:
             n_batch = [n_batch]
         self.n_batch = n_batch
-        print(f"{self.n_batch} in vae.py")
+        # print(f"{self.n_batch} in vae.py")
         self.total_num_of_batches = sum(self.n_batch)
-        self.zero_batch = config.zero_batch
+        # self.zero_batch = config.zero_batch
 
-        self.use_relu = config.use_relu
-        if self.use_relu:
-          print("Using relu in forward() and log_likelihood.")
-        else:
-          print("Not using relu in forward() and log_likelihood().")
+        # self.use_relu = config.use_relu
+        # if self.use_relu:
+          # print("Using relu in forward() and log_likelihood.")
+        # else:
+          # print("Not using relu in forward() and log_likelihood().")
         # print("Uncommented out the normalization step in forward() and log_likelihood().")
-        print("Commented out the normalization step in forward() and log_likelihood().")
+        # print("Commented out the normalization step in forward() and log_likelihood().")
         self.mask = mask
         self.num_gene = torch.sum(self.mask > 0, 1)
-        print('self.num_gene:', self.num_gene)
+        # print('self.num_gene:', self.num_gene)
 
         dim_all = [i.dim for i in self.components]
         # if self.config.z1_x2_ffn:
@@ -114,32 +114,32 @@ class ModelVAE(torch.nn.Module):
                 start = start + dim_all[i]
         self.mask_z = torch.tensor(mask_z)
 
-        mask_z1=np.zeros(dim_z)
-        mask_z1[dim_all[0]:]=1
-        self.mask_z1=torch.tensor(mask_z1)
+        # mask_z1=np.zeros(dim_z)
+        # mask_z1[dim_all[0]:]=1
+        # self.mask_z1=torch.tensor(mask_z1)
 
         self.activation = config.activation
-        print(f"self.activation: {self.activation}")
-        self.use_hsic = config.use_hsic
-        print(f"use_hsic: {self.use_hsic}")
-        self.hsic_weight = config.hsic_weight
-        print(f"hsic_weight: {self.hsic_weight}")
-        self.reconstruction_loss = dataset.reconstruction_loss  # dataset-dependent, not implemented
+        # print(f"self.activation: {self.activation}")
+        # self.use_hsic = config.use_hsic
+        # print(f"use_hsic: {self.use_hsic}")
+        # self.hsic_weight = config.hsic_weight
+        # print(f"hsic_weight: {self.hsic_weight}")
+        # self.reconstruction_loss = dataset.reconstruction_loss  # dataset-dependent, not implemented
 
         self.total_z_dim = sum(component.dim for component in components)
-        if self.config.z1_x2_ffn:
-            self.total_z1_x2_dim = sum([self.config.z1_x2_ffn[-1]] + [component.dim for component in components[1:]])
+        # if self.config.z1_x2_ffn:
+            # self.total_z1_x2_dim = sum([self.config.z1_x2_ffn[-1]] + [component.dim for component in components[1:]])
         for component in components:
             component.init_layers(h_dim, scalar_parametrization=config.scalar_parametrization)
 
         # Construct ffn for z1 when decoding z2 only
-        if self.config.z1_x2_ffn:
-            z1_x2_sizes = [components[0].dim] + self.config.z1_x2_ffn
-            z1_x2_layers = []
-            for in_sz, out_sz in zip(z1_x2_sizes[:-1], z1_x2_sizes[1:]):
-                z1_x2_layers.append(nn.Linear(in_sz, out_sz))
+        # if self.config.z1_x2_ffn:
+            # z1_x2_sizes = [components[0].dim] + self.config.z1_x2_ffn
+            # z1_x2_layers = []
+            # for in_sz, out_sz in zip(z1_x2_sizes[:-1], z1_x2_sizes[1:]):
+                # z1_x2_layers.append(nn.Linear(in_sz, out_sz))
                 # z1_x2_layers.append(nn.GELU())
-            self.z1_x2_ffn = nn.Sequential(*z1_x2_layers)
+            # self.z1_x2_ffn = nn.Sequential(*z1_x2_layers)
 
     def to(self, device: torch.device) -> "ModelVAE":
         self.device = device
@@ -205,15 +205,16 @@ class ModelVAE(torch.nn.Module):
             # print(self.batch)
         
         for i, component in enumerate(self.components):
-            if self.config.ignore_mask:
-                x_mask = x
-            elif self.config.ignore_z1_mask:
-                if i == 0:
-                    x_mask = x
-                else:
-                    x_mask = x * self.mask[i]
-            else:
-                x_mask = x * self.mask[i]
+            x_mask = x * self.mask[i]
+            # if self.config.ignore_mask:
+                # x_mask = x
+            # elif self.config.ignore_z1_mask:
+                # if i == 0:
+                    # x_mask = x
+                # else:
+                    # x_mask = x * self.mask[i]
+            # else:
+                # x_mask = x * self.mask[i]
 
             # Normalization is important for PCA, does not so for NN?
             # if i < 1:
@@ -229,10 +230,10 @@ class ModelVAE(torch.nn.Module):
                 elif i > 0 and len(self.n_batch) > 1:
                     self.batch = self.multi_one_hot(batch, self.n_batch)
             
-            if self.config.print_batch:
-                print(batch)
-                print(self.batch.shape)
-                print(self.batch)
+            # if self.config.print_batch:
+                # print(batch)
+                # print(self.batch.shape)
+                # print(self.batch)
             
             x_encoded = self.encode(x_mask, self.batch)
 
@@ -240,18 +241,18 @@ class ModelVAE(torch.nn.Module):
             z, data = q_z.rsample_with_parts()
             # print(f"z_mean_h.shape: {z_params[0].shape}")
             # print(f"std.shape: {z_params[1].shape}")
-            if self.use_relu:
-                print("Using relu")
-                if 0 == i:
-                    z = torch.cat((torch.relu(z[..., 0:1]), z[..., 1:]), dim=1)
+            # if self.use_relu:
+                # print("Using relu")
+                # if 0 == i:
+                    # z = torch.cat((torch.relu(z[..., 0:1]), z[..., 1:]), dim=1)
 
             reparametrized.append(Reparametrized(q_z, p_z, z, data))
             all_z_params.append(z_params)
 
-        if self.config.print_batch_1:
-            print(batch)
-            print(self.batch.shape)
-            print(self.batch)
+        # if self.config.print_batch_1:
+            # print(batch)
+            # print(self.batch.shape)
+            # print(self.batch)
         concat_z = torch.cat(tuple(x.z for x in reparametrized), dim=-1)
         if self.config.use_poincare_z1:
             poincare_z1 = lorentz_to_poincare(reparametrized[0].z, -2)
@@ -275,46 +276,47 @@ class ModelVAE(torch.nn.Module):
         # new_reparametrized = [self.compute_r2(x)] + reparametrized[1:]        
         # new_concat_z = torch.cat(tuple(x.z for x in new_reparametrized), dim=-1)
 
-        if self.config.z1_x2_ffn:
-            z1_ffn = self.z1_x2_ffn(reparametrized[0].z)
-            concat_z = torch.cat(tuple([z1_ffn]+[x.z for x in reparametrized[1:]]), dim=-1)
+        # if self.config.z1_x2_ffn:
+            # z1_ffn = self.z1_x2_ffn(reparametrized[0].z)
+            # concat_z = torch.cat(tuple([z1_ffn]+[x.z for x in reparametrized[1:]]), dim=-1)
 
         if self.config.use_z2_no_grad:
             if epoch_num is not None:
                 if epoch_num >= self.config.start_z2_no_grad and epoch_num <= self.config.end_z2_no_grad:
-                    if self.config.print_use_z2_no_grad:
-                        print("Creating concat_z")
+                    # if self.config.print_use_z2_no_grad:
+                        # print("Creating concat_z")
                     # with torch.no_grad():
                     # x_encoded = self.encode(x*self.mask[0],self.batch)
                     # component = self.components[0]
                     # q_z, p_z, z_params = component(x_encoded)
                     # z_no_grad, data = q_z.rsample_with_parts()
-                    if self.config.z1_x2_ffn:
-                        concat_z = self.create_concat_z(z1_ffn, reparametrized[1].z)
-                    else:
-                        concat_z = self.create_concat_z(reparametrized[0].z, reparametrized[1].z)
+                    # if self.config.z1_x2_ffn:
+                        # concat_z = self.create_concat_z(z1_ffn, reparametrized[1].z)
+                    # else:
+                        # concat_z = self.create_concat_z(reparametrized[0].z, reparametrized[1].z)
+                    concat_z = self.create_concat_z(reparametrized[0].z, reparametrized[1].z)
             # else:
                 # concat_z = self.create_concat_z(reparametrized[0].z, reparametrized[1].z)
-        if self.config.mask_z2:
-            if epoch_num is not None:
-                if epoch_num <= self.config.end_mask_z2 and epoch_num >= self.config.start_mask_z2:
-                    if self.config.print_mask_z2:
-                        print("Masking concat_z")
-                    concat_z = concat_z * self.mask_z1
+        # if self.config.mask_z2:
+            # if epoch_num is not None:
+                # if epoch_num <= self.config.end_mask_z2 and epoch_num >= self.config.start_mask_z2:
+                    # if self.config.print_mask_z2:
+                        # print("Masking concat_z")
+                    # concat_z = concat_z * self.mask_z1
             # else:
                 # concat_z = concat_z * self.mask_z1
 
-        if self.config.print_concat_z:
-            print(concat_z)
+        # if self.config.print_concat_z:
+            # print(concat_z)
 
         if self.config.use_z2_batch_only:
             if len(self.n_batch) > 1 or self.n_batch[0] > 1:
                 self.batch = self.multi_one_hot(batch, self.n_batch)
 
-        if self.config.print_batch_3:
-            print(batch)
-            print(self.batch.shape)
-            print(self.batch)
+        # if self.config.print_batch_3:
+            # print(batch)
+            # print(self.batch.shape)
+            # print(self.batch)
         mu, sigma_square = self.decode(concat_z, self.batch, decoding_x2=True)
         # mu, sigma_square = self.decode(new_concat_z)
         mu = torch.cat((mu1, mu[:, self.num_gene[0]:]), dim=-1)
@@ -323,19 +325,19 @@ class ModelVAE(torch.nn.Module):
         # print(f"mu.shape: {mu.shape}")
         # print(f"sigma_square.shape: {sigma_square.shape}")
         
-        if self.config.use_z1_train:
-            if epoch_num is not None:
-                if epoch_num <= self.config.use_z1_train_end and epoch_num >= self.config.use_z1_train_start:
-                    mu = mu1
-                    sigma_square = sigma_square1
+        # if self.config.use_z1_train:
+            # if epoch_num is not None:
+                # if epoch_num <= self.config.use_z1_train_end and epoch_num >= self.config.use_z1_train_start:
+                    # mu = mu1
+                    # sigma_square = sigma_square1
 
-        if self.config.use_z2_train:
-            if epoch_num is not None:
-                if epoch_num <= self.config.use_z2_train_end and epoch_num >= self.config.use_z2_train_start:
-                    if self.config.print_use_z2_train:
-                        print("Training x2 only")
-                    mu = mu[:, self.num_gene[0]:]
-                    sigma_square = sigma_square[self.num_gene[0]:]
+        # if self.config.use_z2_train:
+            # if epoch_num is not None:
+                # if epoch_num <= self.config.use_z2_train_end and epoch_num >= self.config.use_z2_train_start:
+                    # if self.config.print_use_z2_train:
+                        # print("Training x2 only")
+                    # mu = mu[:, self.num_gene[0]:]
+                    # sigma_square = sigma_square[self.num_gene[0]:]
 
         concat_z_params = torch.cat(tuple(z_params[0] for z_params in all_z_params), dim=-1)
 
@@ -344,21 +346,21 @@ class ModelVAE(torch.nn.Module):
     def create_concat_z(self, z1, z2):
         z1_no_grad = z1.detach().clone()
         z1_no_grad.requires_grad = False
-        if self.config.use_poincare_z1:
-            poincare_z1_no_grad = lorentz_to_poincare(z1_no_grad, -2)
-            poincare_z1_no_grad = torch.cat((torch.zeros(len(poincare_z1_no_grad), 1), poincare_z1_no_grad), dim=-1)
-            z1_no_grad = poincare_z1_no_grad
+        # if self.config.use_poincare_z1:
+            # poincare_z1_no_grad = lorentz_to_poincare(z1_no_grad, -2)
+            # poincare_z1_no_grad = torch.cat((torch.zeros(len(poincare_z1_no_grad), 1), poincare_z1_no_grad), dim=-1)
+            # z1_no_grad = poincare_z1_no_grad
         concat_z = torch.cat((z1_no_grad, z2), dim=-1)
         return concat_z
 
-    @torch.no_grad()
-    def compute_r2(self, x):
-        x_mask = x * self.mask[0]
-        x_encoded = self.encode(x_mask)
+    # @torch.no_grad()
+    # def compute_r2(self, x):
+        # x_mask = x * self.mask[0]
+        # x_encoded = self.encode(x_mask)
 
-        q_z, p_z, _ = self.components[0](x_encoded)
-        z, data = q_z.rsample_with_parts()
-        return Reparametrized(q_z, p_z, z, data)
+        # q_z, p_z, _ = self.components[0](x_encoded)
+        # z, data = q_z.rsample_with_parts()
+        # return Reparametrized(q_z, p_z, z, data)
 
     def log_likelihood(self, x: Tensor, batch: Tensor, n: int = 500) -> Tuple[Tensor, Tensor, Tensor]:
         """
@@ -462,73 +464,73 @@ class ModelVAE(torch.nn.Module):
         # For each component
         #
         # bce = self.reconstruction_loss(x_mb_, x_mb).sum(dim=-1)
-        full_bce = self.log_likelihood_nb(x_mb, x_mb_, sigma_square_)
+        bce = self.log_likelihood_nb(x_mb, x_mb_, sigma_square_)
         
-        if self.config.specific_gene_weight is not None:
-            first_bce=full_bce[:,0:self.num_gene[0]]*self.config.specific_gene_weight
-            first_bce=torch.sum(first_bce,dim=-1)
-        else:
-            first_bce=torch.sum(full_bce[:,0:self.num_gene[0]],dim=-1)
-        second_bce=torch.sum(full_bce[:,self.num_gene[0]:],dim=-1)
+        # if self.config.specific_gene_weight is not None:
+            # first_bce=full_bce[:,0:self.num_gene[0]]*self.config.specific_gene_weight
+            # first_bce=torch.sum(first_bce,dim=-1)
+        # else:
+            # first_bce=torch.sum(full_bce[:,0:self.num_gene[0]],dim=-1)
+        # second_bce=torch.sum(full_bce[:,self.num_gene[0]:],dim=-1)
 
-        if self.config.second_weight:
-            second_bce=second_bce*self.config.second_weight
+        # if self.config.second_weight:
+            # second_bce=second_bce*self.config.second_weight
 
-        if self.config.specific_gene_weight is not None:
-            full_bce[:,0:self.num_gene[0]]=full_bce[:,0:self.num_gene[0]]*self.config.specific_gene_weight
-        if self.config.second_weight:
-            full_bce[:,self.num_gene[0]:]=full_bce[:,self.num_gene[0]:]*self.config.second_weight
-        bce = torch.sum(full_bce, dim=-1)
+        # if self.config.specific_gene_weight is not None:
+            # full_bce[:,0:self.num_gene[0]]=full_bce[:,0:self.num_gene[0]]*self.config.specific_gene_weight
+        # if self.config.second_weight:
+            # full_bce[:,self.num_gene[0]:]=full_bce[:,self.num_gene[0]:]*self.config.second_weight
+        # bce = torch.sum(full_bce, dim=-1)
         assert torch.isfinite(bce).all()
         # assert (bce >= 0).all()
 
-        if self.use_btcvae:
-            z1_samples = reparametrized[0].z
-            z1_data = reparametrized[0].data
-            z1_prior_dist = reparametrized[0].p_z
-            z1_q_dist = reparametrized[0].p_z
+        # if self.use_btcvae:
+            # z1_samples = reparametrized[0].z
+            # z1_data = reparametrized[0].data
+            # z1_prior_dist = reparametrized[0].p_z
+            # z1_q_dist = reparametrized[0].p_z
 
-            z2_samples = reparametrized[1].z
-            z2_data = reparametrized[1].data
-            z2_prior_dist = reparametrized[1].p_z
-            z2_q_dist = reparametrized[1].q_z
+            # z2_samples = reparametrized[1].z
+            # z2_data = reparametrized[1].data
+            # z2_prior_dist = reparametrized[1].p_z
+            # z2_q_dist = reparametrized[1].q_z
             # Adjusted ELBO
-            log_px = bce
+            # log_px = bce
         
-            dataset_size = self.dataset_size
-            batch_size = z1_samples.shape[0]
+            # dataset_size = self.dataset_size
+            # batch_size = z1_samples.shape[0]
 
-            logpz2 = z2_prior_dist.log_prob_individual(z2_samples).view(batch_size, -1).sum(1)
-            logqz2_condx = z2_q_dist.log_prob_individual(z2_samples).view(batch_size, -1).sum(1)
+            # logpz2 = z2_prior_dist.log_prob_individual(z2_samples).view(batch_size, -1).sum(1)
+            # logqz2_condx = z2_q_dist.log_prob_individual(z2_samples).view(batch_size, -1).sum(1)
             
-            expanded_z2_samples = z2_samples.unsqueeze(1).repeat((1, batch_size, 1))
-            _logqz2 = z2_q_dist.log_prob_individual(expanded_z2_samples)
-            print("_logqz2.shape:",_logqz2.shape)
+            # expanded_z2_samples = z2_samples.unsqueeze(1).repeat((1, batch_size, 1))
+            # _logqz2 = z2_q_dist.log_prob_individual(expanded_z2_samples)
+            # print("_logqz2.shape:",_logqz2.shape)
 
             # Minibatch weighted sampling
-            logqz2_prodmarginals = (torch.logsumexp(_logqz2, dim=1, keepdim=False) - math.log(batch_size * dataset_size)).sum(1)
-            logqz2 = torch.logsumexp(_logqz2.sum(2), dim=1, keepdim=False) - math.log(batch_size * dataset_size)
+            # logqz2_prodmarginals = (torch.logsumexp(_logqz2, dim=1, keepdim=False) - math.log(batch_size * dataset_size)).sum(1)
+            # logqz2 = torch.logsumexp(_logqz2.sum(2), dim=1, keepdim=False) - math.log(batch_size * dataset_size)
 
-            lamb = 0
-            z2_kl = (logqz2_condx - logqz2) + \
-                self.btcvae_beta * (logqz2 - logqz2_prodmarginals) + \
-                (1 - lamb) * (logqz2_prodmarginals - logqz2)
+            # lamb = 0
+            # z2_kl = (logqz2_condx - logqz2) + \
+                # self.btcvae_beta * (logqz2 - logqz2_prodmarginals) + \
+                # (1 - lamb) * (logqz2_prodmarginals - logqz2)
 
-            component_kl = []
-            r1 = reparametrized[0]
-            component_1_kl = self.components[0].kl_loss(r1.q_z, r1.p_z, r1.z, r1.data)
-            assert torch.isfinite(component_1_kl).all()
-            assert torch.isfinite(z2_kl).all()
-            component_kl.append(component_1_kl)
-            component_kl.append(z2_kl)
-        else:
-            component_kl = []
-            weight = [1.0] * len(self.components)
-            for i, (component, r) in enumerate(zip(self.components, reparametrized)):
-                kl_comp = component.kl_loss(r.q_z, r.p_z, r.z, r.data) * weight[i]
-                # print(kl_comp.shape)
-                assert torch.isfinite(kl_comp).all()
-                component_kl.append(kl_comp)
+            # component_kl = []
+            # r1 = reparametrized[0]
+            # component_1_kl = self.components[0].kl_loss(r1.q_z, r1.p_z, r1.z, r1.data)
+            # assert torch.isfinite(component_1_kl).all()
+            # assert torch.isfinite(z2_kl).all()
+            # component_kl.append(component_1_kl)
+            # component_kl.append(z2_kl)
+        # else:
+        component_kl = []
+        weight = [1.0] * len(self.components)
+        for i, (component, r) in enumerate(zip(self.components, reparametrized)):
+            kl_comp = component.kl_loss(r.q_z, r.p_z, r.z, r.data) * weight[i]
+            # print(kl_comp.shape)
+            assert torch.isfinite(kl_comp).all()
+            component_kl.append(kl_comp)
 
         log_likelihood = None
         mi = None
@@ -536,7 +538,7 @@ class ModelVAE(torch.nn.Module):
         if likelihood_n:
             log_likelihood, mi, cov_norm = self.log_likelihood(x_mb, batch, n=likelihood_n)
 
-        batch_hsic = None
+        # batch_hsic = None
         # if self.use_hsic:
             # hsic = self.calculate_hsic(reparametrized[0].z, reparametrized[1].z) * 1000
             # z1_poincare = lorentz_to_poincare(reparametrized[0].z, self.components[0].manifold.curvature)
@@ -557,36 +559,36 @@ class ModelVAE(torch.nn.Module):
 
         x_mb_ = x_mb_ * library_size[:, None]
 
-        if self.config.use_z1_train:
-            if epoch_num >= self.config.use_z1_train_start and epoch_num <= self.config.use_z1_train_end:
-                x_mb = x_mb[:, :self.num_gene[0]]
+        # if self.config.use_z1_train:
+            # if epoch_num >= self.config.use_z1_train_start and epoch_num <= self.config.use_z1_train_end:
+                # x_mb = x_mb[:, :self.num_gene[0]]
 
-        if self.config.use_z2_train:
-            if epoch_num >= self.config.use_z2_train_start and epoch_num <= self.config.use_z2_train_end:
-                x_mb = x_mb[:, self.num_gene[0]:]
+        # if self.config.use_z2_train:
+            # if epoch_num >= self.config.use_z2_train_start and epoch_num <= self.config.use_z2_train_end:
+                # x_mb = x_mb[:, self.num_gene[0]:]
 
         assert x_mb_.shape == x_mb.shape
         batch_stats = self.compute_batch_stats(x_mb, x_mb_, y_mb, sigma_square_,
                                                reparametrized, likelihood_n=0, beta=beta)
 
-        if self.config.use_hsic:
-            batch_hsic=hsic_hyperbolic(lorentz_to_poincare(concat_z[:,0:3],-2),lorentz_to_poincare(concat_z[:,3:],-1),-2,-1)
-            loss=-(batch_stats.elbo-batch_hsic*self.config.hsic_weight)
-            print(batch_hsic)
-        elif self.config.use_average_hsic:
-            batch_hsic=hsic_hyperbolic(lorentz_to_poincare(concat_z[:,0:3],-2),lorentz_to_poincare(concat_z[:,3:],-1),-2,-1)
-            loss=-(batch_stats.elbo-batch_hsic/self.config.dataset_size*self.config.hsic_weight)
-            print(batch_hsic/self.config.dataset_size*self.config.hsic_weight)
-        else:
-            loss = -batch_stats.elbo  # Maximize elbo instead of minimizing it.
-            if self.config.use_z1_train:
-                if epoch_num >= self.config.use_z1_train_start and epoch_num <= self.config.use_z1_train_end:
-                    if self.config.use_z1_loss:
-                        loss = -batch_stats.elbo1
-            if self.config.use_z2_train:
-                if epoch_num >= self.config.use_z2_train_start and epoch_num <= self.config.use_z2_train_end:
-                    if self.config.use_z2_loss:
-                        loss = -batch_stats.elbo2
+        # if self.config.use_hsic:
+            # batch_hsic=hsic_hyperbolic(lorentz_to_poincare(concat_z[:,0:3],-2),lorentz_to_poincare(concat_z[:,3:],-1),-2,-1)
+            # loss=-(batch_stats.elbo-batch_hsic*self.config.hsic_weight)
+            # print(batch_hsic)
+        # elif self.config.use_average_hsic:
+            # batch_hsic=hsic_hyperbolic(lorentz_to_poincare(concat_z[:,0:3],-2),lorentz_to_poincare(concat_z[:,3:],-1),-2,-1)
+            # loss=-(batch_stats.elbo-batch_hsic/self.config.dataset_size*self.config.hsic_weight)
+            # print(batch_hsic/self.config.dataset_size*self.config.hsic_weight)
+        # else:
+        loss = -batch_stats.elbo  # Maximize elbo instead of minimizing it.
+            # if self.config.use_z1_train:
+                # if epoch_num >= self.config.use_z1_train_start and epoch_num <= self.config.use_z1_train_end:
+                    # if self.config.use_z1_loss:
+                        # loss = -batch_stats.elbo1
+            # if self.config.use_z2_train:
+                # if epoch_num >= self.config.use_z2_train_start and epoch_num <= self.config.use_z2_train_end:
+                    # if self.config.use_z2_loss:
+                        # loss = -batch_stats.elbo2
         assert torch.isfinite(loss).all()
         loss.backward()
 
@@ -605,8 +607,8 @@ class ModelVAE(torch.nn.Module):
              torch.lgamma(x + 1) + sigma * torch.log(sigma + eps) - \
              sigma * log_mu_sigma + x * torch.log(mu + eps) - x * log_mu_sigma
 
-        # return torch.sum(ll, dim=-1)
-        return ll
+        return torch.sum(ll, dim=-1)
+        # return ll
 
     def multi_one_hot(self, indices, depth_list):
         one_hot_tensor = nn.functional.one_hot(indices[:,0], depth_list[0])

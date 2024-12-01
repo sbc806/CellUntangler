@@ -55,25 +55,25 @@ class NBVAE(ModelVAE):
 
         total_num_of_batches = sum(self.n_batch)
         self.total_num_of_batches = total_num_of_batches
-        print(f"{self.n_batch} in nb_vae.py")
-        print(f"batch_invariant: {self.batch_invariant}")
-        print(f"total_num_of_batches: {self.total_num_of_batches}")
+        # print(f"{self.n_batch} in nb_vae.py")
+        # print(f"batch_invariant: {self.batch_invariant}")
+        # print(f"total_num_of_batches: {self.total_num_of_batches}")
         # multi-layer
         # http://adamlineberry.ai/vae-series/vae-code-experiments
         
         self.activation = config.activation
-        print(f"self.activation: {self.activation}")
+        # print(f"self.activation: {self.activation}")
 
         input_dim = dataset.in_dim
         if not self.batch_invariant:
             input_dim = input_dim + self.total_num_of_batches
-        print('self.in_dim:', self.in_dim)
-        print("input_dim:", input_dim)
+        # print('self.in_dim:', self.in_dim)
+        # print("input_dim:", input_dim)
         encoder_szs = [input_dim] + [128, 64, h_dim]
         encoder_layers = []
       
         for in_sz, out_sz in zip(encoder_szs[:-1], encoder_szs[1:]):
-            encoder_layers.append(nn.Linear(in_sz, out_sz, bias=config.use_bias))
+            encoder_layers.append(nn.Linear(in_sz, out_sz, bias=True))
             if config.use_batch_norm:
                 encoder_layers.append(nn.BatchNorm1d(out_sz, momentum=config.momentum, eps=config.eps))
             # encoder_layers.append(nn.BatchNorm1d(out_sz, momentum=0.99, eps=0.001))
@@ -94,14 +94,14 @@ class NBVAE(ModelVAE):
         hidden_sizes = [self.total_z_dim + self.total_num_of_batches] + [64, 128]
         decoder_layers = []
         for in_sz, out_sz in zip(hidden_sizes[:-1], hidden_sizes[1:]):
-            if in_sz == hidden_sizes[0]:
-                decoder_layers.append(nn.Linear(in_sz, out_sz, bias=config.decoder_first_use_bias))
-                if config.decoder_first_batch_norm:
-                    decoder_layers.append(nn.BatchNorm1d(out_sz, momentum=config.momentum, eps=config.eps))
-            else:
-                decoder_layers.append(nn.Linear(in_sz, out_sz, bias=config.use_bias))
-                if config.use_batch_norm:
-                    decoder_layers.append(nn.BatchNorm1d(out_sz, momentum=config.momentum, eps=config.eps))
+            # if in_sz == hidden_sizes[0]:
+            decoder_layers.append(nn.Linear(in_sz, out_sz, bias=True))
+                # if config.decoder_first_batch_norm:
+                    # decoder_layers.append(nn.BatchNorm1d(out_sz, momentum=config.momentum, eps=config.eps))
+            # else:
+                # decoder_layers.append(nn.Linear(in_sz, out_sz, bias=config.use_bias))
+            if config.use_batch_norm:
+                decoder_layers.append(nn.BatchNorm1d(out_sz, momentum=config.momentum, eps=config.eps))
             # decoder_layers.append(nn.BatchNorm1d(out_sz, momentum=0.99, eps=0.001))
             if self.activation == "relu":
                 decoder_layers.append(nn.ReLU())
@@ -116,17 +116,17 @@ class NBVAE(ModelVAE):
 
         self.decoder = nn.Sequential(*decoder_layers)
         
-        if self.config.z1_x2_ffn:
-            decoder_z1_x2_layers = []
-            decoder_z1_x2_layers.append(nn.Linear(self.total_z1_x2_dim+self.total_num_of_batches, 64))
-            decoder_z1_x2_layers.append(nn.GELU())
-            decoder_z1_x2_layers = decoder_z1_x2_layers + decoder_layers[2:]
-            self.decoder_z1_x2 = nn.Sequential(*decoder_z1_x2_layers)
+        # if self.config.z1_x2_ffn:
+            # decoder_z1_x2_layers = []
+            # decoder_z1_x2_layers.append(nn.Linear(self.total_z1_x2_dim+self.total_num_of_batches, 64))
+            # decoder_z1_x2_layers.append(nn.GELU())
+            # decoder_z1_x2_layers = decoder_z1_x2_layers + decoder_layers[2:]
+            # self.decoder_z1_x2 = nn.Sequential(*decoder_z1_x2_layers)
 
         output_dim = dataset.in_dim
         # if not self.batch_invariant:
             # output_dim = output_dim + total_num_of_batches
-        print('output_dim:', output_dim)
+        # print('output_dim:', output_dim)
         self.fc_mu = nn.Linear(128, output_dim)
         self.fc_sigma = nn.Linear(128, output_dim)
 
@@ -169,10 +169,10 @@ class NBVAE(ModelVAE):
 
         if self.total_num_of_batches != 0:
             concat_z = torch.concat((concat_z, batch), dim=1)
-        if self.config.z1_x2_ffn and decoding_x2:
-            x = self.decoder_z1_x2(concat_z)
-        else:
-            x = self.decoder(concat_z)
+        # if self.config.z1_x2_ffn and decoding_x2:
+            # x = self.decoder_z1_x2(concat_z)
+        # else:
+        x = self.decoder(concat_z)
 
         mu = torch.nn.functional.softmax(self.fc_mu(x), -1)
 
