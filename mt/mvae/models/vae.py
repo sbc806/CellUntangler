@@ -254,19 +254,19 @@ class ModelVAE(torch.nn.Module):
             # print(self.batch.shape)
             # print(self.batch)
         concat_z = torch.cat(tuple(x.z for x in reparametrized), dim=-1)
-        if self.config.use_poincare_z1:
-            poincare_z1 = lorentz_to_poincare(reparametrized[0].z, -2)
-            poincare_z1 = torch.cat((torch.zeros((len(poincare_z1),1)), poincare_z1), dim=-1)
-            concat_z = torch.cat((poincare_z1, reparametrized[1].z), dim=-1)
+        # if self.config.use_poincare_z1:
+            # poincare_z1 = lorentz_to_poincare(reparametrized[0].z, -2)
+            # poincare_z1 = torch.cat((torch.zeros((len(poincare_z1),1)), poincare_z1), dim=-1)
+            # concat_z = torch.cat((poincare_z1, reparametrized[1].z), dim=-1)
 
         if self.config.use_z2_batch_only:
             if len(self.n_batch) > 1 or self.n_batch[0] > 1:
                 self.batch = torch.zeros(self.batch.shape)
 
-        if self.config.print_batch_2:
-            print(batch)
-            print(self.batch.shape)
-            print(self.batch)
+        # if self.config.print_batch_2:
+            # print(batch)
+            # print(self.batch.shape)
+            # print(self.batch)
 
         mu1, sigma_square1 = self.decode(concat_z * self.mask_z, self.batch)
         mu1 = mu1[:, :self.num_gene[0]]
@@ -622,121 +622,121 @@ class ModelVAE(torch.nn.Module):
         
         return one_hot_tensor
 
-    def calculate_hsic(self, z1, z2):
-        n = z1.shape[0]
-        u_kernels = torch.zeros((n, n), dtype=torch.float64)
-        v_kernels = torch.zeros((n, n), dtype=torch.float64)
+    # def calculate_hsic(self, z1, z2):
+        # n = z1.shape[0]
+        # u_kernels = torch.zeros((n, n), dtype=torch.float64)
+        # v_kernels = torch.zeros((n, n), dtype=torch.float64)
 
-        z1_gamma = torch.sqrt(calculate_median_gamma(z1)/2)
-        z2_gamma = torch.sqrt(calculate_median_gamma(z2)/2)
+        # z1_gamma = torch.sqrt(calculate_median_gamma(z1)/2)
+        # z2_gamma = torch.sqrt(calculate_median_gamma(z2)/2)
 
-        for i in range(0, n):
-            for j in range(0, n):
-                u_kernels[i][j] = self.gaussian_kernel(z1[i], z1[j], z1_gamma)
-                v_kernels[i][j] = self.gaussian_kernel(z2[i], z2[j], z2_gamma)
+        # for i in range(0, n):
+            # for j in range(0, n):
+                # u_kernels[i][j] = self.gaussian_kernel(z1[i], z1[j], z1_gamma)
+                # v_kernels[i][j] = self.gaussian_kernel(z2[i], z2[j], z2_gamma)
 
-        first_term = torch.sum(u_kernels * v_kernels) / n**2
+        # first_term = torch.sum(u_kernels * v_kernels) / n**2
 
-        second_term = 0
-        for i in range(0, n):
-            for j in range(0, n):
-                second_term = second_term + torch.sum(u_kernels[i][j] * v_kernels)
-        second_term = second_term / n**4
+        # second_term = 0
+        # for i in range(0, n):
+            # for j in range(0, n):
+                # second_term = second_term + torch.sum(u_kernels[i][j] * v_kernels)
+        # second_term = second_term / n**4
 
-        third_term = 0
-        for i in range(0, n):
-            for j in range(0, n):
-                third_term = third_term + torch.sum(u_kernels[i][j] * v_kernels[i])
-        third_term = third_term * 2 / n**3
-        return first_term + second_term - third_term
+        # third_term = 0
+        # for i in range(0, n):
+            # for j in range(0, n):
+                # third_term = third_term + torch.sum(u_kernels[i][j] * v_kernels[i])
+        # third_term = third_term * 2 / n**3
+        # return first_term + second_term - third_term
     
-    def gaussian_kernel(self, u, u_1, gamma=1.0):
-        """
-        A universal kernel when gamma > 1.0.
-        """
-        difference = u - u_1
-        squared_norm = torch.linalg.vector_norm(difference, ord=2)**2
+    # def gaussian_kernel(self, u, u_1, gamma=1.0):
+        # """
+        # A universal kernel when gamma > 1.0.
+        # """
+        # difference = u - u_1
+        # squared_norm = torch.linalg.vector_norm(difference, ord=2)**2
   
-        return torch.exp(-gamma * squared_norm)
+        # return torch.exp(-gamma * squared_norm)
 
 
-def calculate_median_gamma(x):
-    n = x.shape[0]
-    medians = torch.zeros(int((n-1)*(n-1+1)/2), dtype=torch.float64)
-    count = 0
-    for i in range(0, n-1):
-        for j in range(i+1, n):
-            medians[count] = torch.linalg.norm(x[i] - x[j], ord=2)**2
-            count = count + 1
-    return torch.median(medians)
+# def calculate_median_gamma(x):
+    # n = x.shape[0]
+    # medians = torch.zeros(int((n-1)*(n-1+1)/2), dtype=torch.float64)
+    # count = 0
+    # for i in range(0, n-1):
+        # for j in range(i+1, n):
+            # medians[count] = torch.linalg.norm(x[i] - x[j], ord=2)**2
+            # count = count + 1
+    # return torch.median(medians)
 
-def bandwidth(d):
-    """
-    in the case of Gaussian random variables and the use of a RBF kernel, 
-    this can be used to select the bandwidth according to the median heuristic
-    """
-    print(d)
-    gz = 2 * gamma(0.5 * (d+1)) / gamma(0.5 * d)
-    return 1. / (2. * gz**2)
+# def bandwidth(d):
+    # """
+    # in the case of Gaussian random variables and the use of a RBF kernel, 
+    # this can be used to select the bandwidth according to the median heuristic
+    # """
+    # print(d)
+    # gz = 2 * gamma(0.5 * (d+1)) / gamma(0.5 * d)
+    # return 1. / (2. * gz**2)
     
-def K(x1, x2, gamma=1.): 
-    dist_table = torch.unsqueeze(x1, 0) - torch.unsqueeze(x2, 1)
-    return torch.exp(-gamma * torch.sum(dist_table **2, dim=2)).T
+# def K(x1, x2, gamma=1.): 
+    # dist_table = torch.unsqueeze(x1, 0) - torch.unsqueeze(x2, 1)
+    # return torch.exp(-gamma * torch.sum(dist_table **2, dim=2)).T
 
-def hsic(z, s):
+# def hsic(z, s):
     
     # use a gaussian RBF for every variable
       
-    d_z = list(z.shape)[1]
-    d_s = list(s.shape)[1]
+    # d_z = list(z.shape)[1]
+    # d_s = list(s.shape)[1]
     
-    zz = K(z, z, gamma= bandwidth(d_z))
-    ss = K(s, s, gamma= bandwidth(d_s))
+    # zz = K(z, z, gamma= bandwidth(d_z))
+    # ss = K(s, s, gamma= bandwidth(d_s))
         
         
-    hsic = 0
-    hsic += torch.mean(zz * ss) 
-    hsic += torch.mean(zz) * torch.mean(ss)
-    hsic -= 2 * torch.mean( torch.mean(zz, dim=1) * torch.mean(ss, dim=1) )
-    return torch.sqrt(hsic)
+    # hsic = 0
+    # hsic += torch.mean(zz * ss) 
+    # hsic += torch.mean(zz) * torch.mean(ss)
+    # hsic -= 2 * torch.mean( torch.mean(zz, dim=1) * torch.mean(ss, dim=1) )
+    # return torch.sqrt(hsic)
 
-def K_hyperbolic(x1, x2, gamma=1., curvature=-1):
-    x1 = fd_distance(x1, curvature=curvature)
-    x2 = fd_distance(x2, curvature=curvature)
-    return K(x1, x2, gamma=gamma)
+# def K_hyperbolic(x1, x2, gamma=1., curvature=-1):
+    # x1 = fd_distance(x1, curvature=curvature)
+    # x2 = fd_distance(x2, curvature=curvature)
+    # return K(x1, x2, gamma=gamma)
 
-def hsic_hyperbolic(z, s, curvature_1=-1, curvature_2=-1):
-    d_z = list(z.shape)[1]
-    d_s = list(s.shape)[1]
+# def hsic_hyperbolic(z, s, curvature_1=-1, curvature_2=-1):
+    # d_z = list(z.shape)[1]
+    # d_s = list(s.shape)[1]
 
-    zz = K_hyperbolic(z, z, gamma=bandwidth(d_z), curvature=curvature_1)
-    ss = K_hyperbolic(s, s, gamma=bandwidth(d_s), curvature=curvature_2)
+    # zz = K_hyperbolic(z, z, gamma=bandwidth(d_z), curvature=curvature_1)
+    # ss = K_hyperbolic(s, s, gamma=bandwidth(d_s), curvature=curvature_2)
 
-    hsic = 0
-    hsic += torch.mean(zz * ss)
-    hsic += torch.mean(zz) ** torch.mean(ss)
-    hsic -= 2 * torch.mean(torch.mean(zz, dim=1) * torch.mean(ss, dim=1))
-    return torch.sqrt(hsic)
+    # hsic = 0
+    # hsic += torch.mean(zz * ss)
+    # hsic += torch.mean(zz) ** torch.mean(ss)
+    # hsic -= 2 * torch.mean(torch.mean(zz, dim=1) * torch.mean(ss, dim=1))
+    # return torch.sqrt(hsic)
 
-def hsic_mixed(z, s , curvature=-1):
-    d_z = list(z.shape)[1]
-    d_s = list(s.shape)[1]
+# def hsic_mixed(z, s , curvature=-1):
+    # d_z = list(z.shape)[1]
+    # d_s = list(s.shape)[1]
 
-    zz = K_hyperbolic(z, z, gamma=bandwidth(d_z), curvature=curvature)
-    ss = K(s, s, gamma=bandwidth(d_s))
+    # zz = K_hyperbolic(z, z, gamma=bandwidth(d_z), curvature=curvature)
+    # ss = K(s, s, gamma=bandwidth(d_s))
 
-    hsic = 0
-    hsic += torch.mean(zz * ss)
-    hsic += torch.mean(zz) * torch.mean(ss)
-    hsic -= 2 * torch.mean(torch.mean(zz, dim=1) * torch.mean(ss, dim=1))
-    return torch.sqrt(hsic)
+    # hsic = 0
+    # hsic += torch.mean(zz * ss)
+    # hsic += torch.mean(zz) * torch.mean(ss)
+    # hsic -= 2 * torch.mean(torch.mean(zz, dim=1) * torch.mean(ss, dim=1))
+    # return torch.sqrt(hsic)
 
-def fd_distance(z, curvature=-1):
-    z_norm = torch.norm(z, dim=1)
-    abs_curvature = abs(curvature)
-    coefficient = torch.atanh(math.sqrt(abs_curvature)*z_norm)/(math.sqrt(abs_curvature)*z_norm)
-    distance = coefficient.unsqueeze(-1).expand(z.shape)*z
-    return distance
+# def fd_distance(z, curvature=-1):
+    # z_norm = torch.norm(z, dim=1)
+    # abs_curvature = abs(curvature)
+    # coefficient = torch.atanh(math.sqrt(abs_curvature)*z_norm)/(math.sqrt(abs_curvature)*z_norm)
+    # distance = coefficient.unsqueeze(-1).expand(z.shape)*z
+    # return distance
 
-def lorentz_to_poincare(embeddings, curvature):
-    return embeddings[:, 1:] / (1 + math.sqrt(abs(curvature)) * embeddings[:, 0:1])
+# def lorentz_to_poincare(embeddings, curvature):
+    # return embeddings[:, 1:] / (1 + math.sqrt(abs(curvature)) * embeddings[:, 0:1])
